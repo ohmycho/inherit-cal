@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 8000,
+        max_tokens: 4000,
         stream: true,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }]
