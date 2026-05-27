@@ -1313,16 +1313,15 @@ function computeInheritance(mode) {
   var deductLimit = Math.max(0, netAsset - (taxableBase > 50000 ? priorTaxBase : 0));
   var totalDeduct = Math.min(sumDeductions, deductLimit);
 
-  // 7. 과세표준 및 산출세액
+  // 7. 과세표준 및 산출세액 (만원 단위)
   var taxStandard = Math.max(0, taxableBase - totalDeduct);
-  var grossTax    = calcInheritTax(taxStandard);
+  var grossTax    = Math.round(calcInheritTax(taxStandard) / 10000); // 만원 단위로 변환
 
-  // 8. 세액공제
+  // 8. 세액공제 (만원 단위)
   var reportDeduct = Math.round(grossTax * 0.03); // 신고세액공제 3%
-  // 기납부증여세액공제: 사전증여 과세표준에 세율 적용
-  var priorTaxPaid = Math.round(calcInheritTax(priorTaxBase));
+  var priorTaxPaid = Math.round(calcInheritTax(priorTaxBase) / 10000); // 만원 단위
 
-  var finalTax = Math.max(0, Math.round(grossTax - reportDeduct - priorTaxPaid));
+  var finalTax = Math.max(0, grossTax - reportDeduct - priorTaxPaid);
 
   // 9. 취득세
   var acquisitionTax = 0;
@@ -1436,13 +1435,13 @@ function generateReportHTML(type) {
   }
 
   // 세율 계산 (요약 박스 + 아코디언 모두 사용)
-  var txWon = r.taxStandard * 10000;
+  var txWon = r.taxStandard * 10000; // 만원 → 원 변환 (세율 구간 판단용)
   var rateStr, progressStr, taxFormula;
-  if (txWon <= 100000000)       { rateStr='10%'; progressStr='0원'; taxFormula=formatKor(r.taxStandard)+' × 10% = '+formatKor(Math.round(r.grossTax/10000)); }
-  else if (txWon <= 500000000)  { rateStr='20%'; progressStr='1,000만원'; taxFormula=formatKor(r.taxStandard)+' × 20% − 1,000만원 = '+formatKor(Math.round(r.grossTax/10000)); }
-  else if (txWon <= 1000000000) { rateStr='30%'; progressStr='6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 30% − 6,000만원 = '+formatKor(Math.round(r.grossTax/10000)); }
-  else if (txWon <= 3000000000) { rateStr='40%'; progressStr='1억 6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 40% − 1억 6,000만원 = '+formatKor(Math.round(r.grossTax/10000)); }
-  else                          { rateStr='50%'; progressStr='4억 6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 50% − 4억 6,000만원 = '+formatKor(Math.round(r.grossTax/10000)); }
+  if (txWon <= 100000000)       { rateStr='10%'; progressStr='0원'; taxFormula=formatKor(r.taxStandard)+' × 10% = '+formatKor(r.grossTax); }
+  else if (txWon <= 500000000)  { rateStr='20%'; progressStr='1,000만원'; taxFormula=formatKor(r.taxStandard)+' × 20% − 1,000만원 = '+formatKor(r.grossTax); }
+  else if (txWon <= 1000000000) { rateStr='30%'; progressStr='6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 30% − 6,000만원 = '+formatKor(r.grossTax); }
+  else if (txWon <= 3000000000) { rateStr='40%'; progressStr='1억 6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 40% − 1억 6,000만원 = '+formatKor(r.grossTax); }
+  else                          { rateStr='50%'; progressStr='4억 6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 50% − 4억 6,000만원 = '+formatKor(r.grossTax); }
 
   // 최종 납부세액 요약 박스
   html += '<div style="background:linear-gradient(135deg,rgba(107,53,207,0.08),rgba(107,53,207,0.03));border-radius:14px;padding:18px;margin:12px 0;border:1.5px solid rgba(107,53,207,0.2);">';
@@ -1461,8 +1460,8 @@ function generateReportHTML(type) {
   html += '② 상속공제 = ' + formatKor(r.chosenDeduct) + (S.hasSpouse?' + '+formatKor(r.spouseDeduct):'') + (r.financeDeduct>0?' + '+formatKor(r.financeDeduct):'') + (r.cohouseDeduct>0?' + '+formatKor(r.cohouseDeduct):'') + ' = <strong>' + formatKor(r.totalDeduct) + '</strong><br><br>';
   html += '③ 과세표준 = ' + formatKor(r.taxableBase) + ' − ' + formatKor(r.totalDeduct) + ' = <strong>' + formatKor(r.taxStandard) + '</strong><br><br>';
   html += '④ 산출세액 = ' + taxFormula + '<br>   적용세율: <strong>' + rateStr + '</strong> / 누진공제액: <strong>' + progressStr + '</strong><br><br>';
-  html += '⑤ 신고세액공제 3% = △<strong>' + formatKor(Math.round(r.reportDeduct/10000)) + '</strong><br>';
-  if (r.priorTaxPaid > 0) html += '⑥ 기납부증여세 = △<strong>' + formatKor(Math.round(r.priorTaxPaid/10000)) + '</strong><br>';
+  html += '⑤ 신고세액공제 3% = △<strong>' + formatKor(r.reportDeduct) + '</strong><br>';
+  if (r.priorTaxPaid > 0) html += '⑥ 기납부증여세 = △<strong>' + formatKor(r.priorTaxPaid) + '</strong><br>';
   html += '</div><div style="font-size:16px;font-weight:900;color:var(--purple);margin-top:12px;text-align:center;">최종 납부세액 = <strong>' + formatKor(r.finalTax) + '</strong></div></div></details>';
 
   // 취득세 아코디언
