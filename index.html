@@ -12,8 +12,25 @@
   --purple: #6B35CF; --purple-light: #F0EBFF; --purple-text: #4A1FA8;
   --toss-blue: #3182f6; --toss-gray: #f2f4f6; --toss-text: #191f28; --toss-subtext: #4e5968;
   --green: #0F7A45; --blue: #1845D4;
+  /* 토스 폰트 스케일 */
+  --fs-xs:   13px;
+  --fs-sm:   15px;
+  --fs-base: 16px;
+  --fs-md:   17px;
+  --fs-lg:   19px;
+  --fs-xl:   22px;
+  --fs-2xl:  26px;
+  --fs-3xl:  30px;
 }
-body { font-family: 'Noto Sans KR', sans-serif; background: #fff; color: var(--toss-text); min-height: 100vh; }
+body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #fff; color: var(--toss-text);
+  min-height: 100vh;
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  letter-spacing: -0.3px;
+  -webkit-font-smoothing: antialiased;
+}
 
 /* ── 진행 바 (상단 고정) */
 #progress-bar-wrap {
@@ -41,33 +58,33 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #fff; color: var(--t
 .wiz-step.active { display: block; }
 @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
 
-.wiz-back { border: none; background: none; color: var(--toss-subtext); font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 0; font-family: 'Noto Sans KR', sans-serif; }
+.wiz-back { border: none; background: none; color: var(--toss-subtext); font-size: var(--fs-sm); font-weight: 600; margin-bottom: 24px; cursor: pointer; padding: 0; font-family: inherit; }
 
 /* ── 타이틀 */
-.wiz-title { font-size: 26px; font-weight: 800; line-height: 1.4; margin-bottom: 24px; letter-spacing: -0.5px; }
+.wiz-title { font-size: var(--fs-3xl); font-weight: 900; line-height: 1.35; margin-bottom: 28px; letter-spacing: -0.8px; }
 
 /* ── 안내 배너 */
 .guide-banner {
   background: linear-gradient(135deg, rgba(107,53,207,0.07), rgba(107,53,207,0.03));
   border: 1px solid rgba(107,53,207,0.15); border-radius: 14px;
-  padding: 14px 16px; margin-bottom: 20px;
-  font-size: 14px; color: var(--purple-text); line-height: 1.65;
+  padding: 16px 18px; margin-bottom: 24px;
+  font-size: var(--fs-sm); color: var(--purple-text); line-height: 1.7;
 }
 .guide-banner strong { color: var(--purple); }
 
 /* ── 피드백 말풍선 */
 .feedback-bubble {
   background: linear-gradient(135deg, #1e3a5f, #6B35CF);
-  border-radius: 14px; padding: 12px 16px; margin-bottom: 16px;
-  color: #fff; font-size: 14px; line-height: 1.6; display: none;
+  border-radius: 14px; padding: 14px 18px; margin-bottom: 18px;
+  color: #fff; font-size: var(--fs-sm); line-height: 1.65; display: none;
 }
 .feedback-bubble.show { display: block; animation: fadeUp 0.3s ease; }
-.feedback-bubble strong { color: #fbbf24; display: block; font-size: 13px; margin-bottom: 2px; }
+.feedback-bubble strong { color: #fbbf24; display: block; font-size: var(--fs-xs); margin-bottom: 3px; }
 
 /* ── 입력 */
-.field { margin-bottom: 22px; }
-.field-label { font-size: 14px; font-weight: 600; color: var(--toss-subtext); margin-bottom: 10px; display: block; }
-.field-caption { font-size: 12px; color: #a0a0a0; margin-top: 5px; line-height: 1.5; }
+.field { margin-bottom: 26px; }
+.field-label { font-size: var(--fs-md); font-weight: 700; color: var(--toss-subtext); margin-bottom: 12px; display: block; }
+.field-caption { font-size: var(--fs-xs); color: #a0a0a0; margin-top: 6px; line-height: 1.6; }
 .num-row { display: flex; align-items: center; gap: 10px; }
 .num-row input, .price-input {
   flex: 1; padding: 16px 20px; font-size: 22px; font-weight: 700;
@@ -79,52 +96,52 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #fff; color: var(--t
   border-color: var(--purple); background: #fff;
   box-shadow: 0 0 0 4px rgba(107,53,207,0.1);
 }
-.num-row span { font-size: 16px; font-weight: 600; color: var(--toss-subtext); white-space: nowrap; }
-.kor-preview { font-size: 15px; font-weight: 700; color: var(--purple); margin-top: 8px; min-height: 22px; padding-left: 4px; }
+.num-row span { font-size: var(--fs-md); font-weight: 700; color: var(--toss-subtext); white-space: nowrap; }
+.kor-preview { font-size: var(--fs-md); font-weight: 800; color: var(--purple); margin-top: 10px; min-height: 24px; padding-left: 4px; }
 
 /* ── 퀵 버튼 */
-.quick-row { display: flex; gap: 8px; margin-top: 10px; }
+.quick-row { display: flex; gap: 8px; margin-top: 12px; }
 .quick-btn {
-  flex: 1; padding: 11px 4px; border-radius: 10px;
+  flex: 1; padding: 13px 4px; border-radius: 12px;
   border: 1.5px solid var(--purple); background: rgba(107,53,207,0.05);
-  color: var(--purple); font-size: 13px; font-weight: 700;
-  cursor: pointer; transition: 0.2s; font-family: 'Noto Sans KR', sans-serif;
+  color: var(--purple); font-size: var(--fs-sm); font-weight: 700;
+  cursor: pointer; transition: 0.2s; font-family: inherit;
 }
 .quick-btn:active { transform: scale(0.95); }
 
 /* ── YN 버튼 */
-.yn-row { display: flex; gap: 10px; }
+.yn-row { display: flex; gap: 12px; }
 .yn-btn {
-  flex: 1; padding: 22px 10px; background: var(--toss-gray); border: none;
-  border-radius: 18px; font-size: 17px; font-weight: 700; cursor: pointer;
-  transition: 0.2s; font-family: 'Noto Sans KR', sans-serif; color: var(--toss-text);
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex: 1; padding: 26px 10px; background: var(--toss-gray); border: none;
+  border-radius: 20px; font-size: var(--fs-xl); font-weight: 800; cursor: pointer;
+  transition: 0.2s; font-family: inherit; color: var(--toss-text);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
   min-width: 0; box-sizing: border-box;
 }
-.yn-btn small { font-size: 13px; color: var(--toss-subtext); font-weight: 400; }
-.yn-btn.on { background: var(--purple); color: #fff; box-shadow: 0 4px 16px rgba(107,53,207,0.3); }
-.yn-btn.on small { color: rgba(255,255,255,0.8); }
+.yn-btn small { font-size: var(--fs-sm); color: var(--toss-subtext); font-weight: 500; }
+.yn-btn.on { background: var(--purple); color: #fff; box-shadow: 0 6px 20px rgba(107,53,207,0.35); }
+.yn-btn.on small { color: rgba(255,255,255,0.85); }
 .yn-btn:not(.on):hover { background: #e5e8eb; }
 
 /* ── 안내 팁 박스 */
 .q-sub-box {
   background: rgba(107,53,207,0.05);
   border: 1px solid rgba(107,53,207,0.12);
-  border-radius: 10px; padding: 10px 12px;
-  margin-top: 4px; margin-bottom: 12px;
-  font-size: 12.5px; color: #4A1FA8; line-height: 1.6;
+  border-radius: 12px; padding: 13px 15px;
+  margin-top: 6px; margin-bottom: 14px;
+  font-size: var(--fs-sm); color: #4A1FA8; line-height: 1.7;
 }
 
 /* ── 소형 모바일 반응형 */
 @media screen and (max-width: 390px) {
   #wizard-wrap { padding-left: 14px; padding-right: 14px; }
   .wiz-inner { width: 100%; }
-  .wiz-title { font-size: 23px; }
-  .yn-btn { padding: 16px 8px; font-size: 15px; }
-  .yn-btn small { font-size: 11px; }
-  .num-row input, .price-input { padding: 13px 14px; font-size: 18px; }
-  .consult-btn { padding: 16px 12px; font-size: 15px; }
-  .info-card, .asset-card, .prior-item { padding: 12px; }
+  .wiz-title { font-size: var(--fs-2xl); }
+  .yn-btn { padding: 20px 8px; font-size: var(--fs-lg); }
+  .yn-btn small { font-size: var(--fs-xs); }
+  .num-row input, .price-input { padding: 14px 15px; font-size: 20px; }
+  .consult-btn { padding: 18px 12px; font-size: var(--fs-md); }
+  .info-card, .asset-card, .prior-item { padding: 14px; }
 }
 
 /* ── 선택 카드 */
@@ -151,155 +168,144 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #fff; color: var(--t
 .choice-card.on .card-sub { color: rgba(255,255,255,0.8); }
 
 /* 안심 로딩 UI */
-.ai-loading { text-align: center; padding: 36px 20px; color: var(--toss-subtext); }
-.modern-progress-bar { height: 6px; background: #e5e8eb; border-radius: 3px; overflow: hidden; margin: 12px 0 16px; }
+.ai-loading { text-align: center; padding: 40px 20px; color: var(--toss-subtext); }
+.modern-progress-bar { height: 6px; background: #e5e8eb; border-radius: 3px; overflow: hidden; margin: 14px 0 18px; }
 .modern-progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #3182f6, var(--purple)); background-size: 200% 100%; border-radius: 3px; animation: progressAnim 2s linear infinite; transition: width 0.8s ease; }
 @keyframes progressAnim { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
-.loading-msg { font-size: 14px; font-weight: 600; color: var(--purple); min-height: 22px; transition: opacity 0.4s; }
+.loading-msg { font-size: var(--fs-base); font-weight: 700; color: var(--purple); min-height: 24px; transition: opacity 0.4s; }
 
 /* 마크다운 테이블 스타일 */
-.ai-content table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
-.ai-content th { background: var(--purple); color: #fff; padding: 10px 12px; text-align: left; font-weight: 700; }
-.ai-content td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; }
+.ai-content table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: var(--fs-sm); }
+.ai-content th { background: var(--purple); color: #fff; padding: 12px 14px; text-align: left; font-weight: 700; font-size: var(--fs-sm); }
+.ai-content td { padding: 11px 14px; border-bottom: 1px solid #f0f0f0; font-size: var(--fs-sm); line-height: 1.6; }
 .ai-content tr:nth-child(even) td { background: #fafafa; }
-.ai-content ul { margin: 8px 0 8px 20px; }
-.ai-content li { margin-bottom: 4px; line-height: 1.7; }
+.ai-content ul { margin: 10px 0 10px 20px; }
+.ai-content li { margin-bottom: 6px; line-height: 1.75; font-size: var(--fs-sm); }
 /* AI 결과 헤더 계층 스타일 */
 .ai-content .ai-h1 {
-  font-size: 18px; font-weight: 900; color: var(--toss-text);
-  margin: 24px 0 10px;
-  padding: 14px 16px;
+  font-size: var(--fs-xl); font-weight: 900; color: var(--toss-text);
+  margin: 28px 0 12px;
+  padding: 16px 18px;
   background: linear-gradient(135deg, rgba(107,53,207,0.08), rgba(107,53,207,0.03));
   border-left: 4px solid var(--purple);
-  border-radius: 0 10px 10px 0;
-  letter-spacing: -0.3px;
+  border-radius: 0 12px 12px 0;
+  letter-spacing: -0.5px;
 }
 .ai-content .ai-h2 {
-  font-size: 16px; font-weight: 800; color: var(--purple-text);
-  margin: 20px 0 8px;
-  padding: 10px 14px;
+  font-size: var(--fs-lg); font-weight: 800; color: var(--purple-text);
+  margin: 24px 0 10px;
+  padding: 12px 16px;
   background: rgba(107,53,207,0.05);
   border-left: 3px solid var(--purple);
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 10px 10px 0;
 }
 .ai-content .ai-h3 {
-  font-size: 15px; font-weight: 700; color: var(--toss-text);
-  margin: 16px 0 6px;
-  padding: 2px 0 2px 12px;
+  font-size: var(--fs-md); font-weight: 700; color: var(--toss-text);
+  margin: 18px 0 8px;
+  padding: 3px 0 3px 14px;
   border-left: 3px solid #a78bfa;
 }
 .ai-content .ai-h4 {
-  font-size: 14px; font-weight: 700; color: var(--toss-subtext);
-  margin: 12px 0 4px;
-  padding-left: 8px;
+  font-size: var(--fs-base); font-weight: 700; color: var(--toss-subtext);
+  margin: 14px 0 6px;
+  padding-left: 10px;
   position: relative;
 }
-.ai-content .ai-h4::before {
-  content: '◆';
-  font-size: 8px;
-  color: var(--purple);
-  margin-right: 6px;
-  vertical-align: middle;
-}
+.ai-content .ai-h4::before { content: '◆'; font-size: 9px; color: var(--purple); margin-right: 7px; vertical-align: middle; }
 .ai-content .ai-h5 {
-  font-size: 13px; font-weight: 600; color: var(--toss-subtext);
-  margin: 8px 0 4px;
-  padding-left: 6px;
+  font-size: var(--fs-sm); font-weight: 600; color: var(--toss-subtext);
+  margin: 10px 0 5px; padding-left: 8px;
 }
-.ai-content .ai-h5::before {
-  content: '▸ ';
-  color: #a78bfa;
-  font-size: 11px;
-}
+.ai-content .ai-h5::before { content: '▸ '; color: #a78bfa; font-size: 12px; }
 .ai-content strong { color: var(--purple-text); }
-.card-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 100px; color: #fff; display: inline-block; margin-bottom: 8px; }
+.card-badge { font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 100px; color: #fff; display: inline-block; margin-bottom: 10px; }
 .badge-a { background: var(--blue); }
 .badge-b { background: var(--purple); }
 .badge-c { background: var(--green); }
-.card-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-.card-sub   { font-size: 13px; color: var(--toss-subtext); line-height: 1.5; }
+.card-title { font-size: var(--fs-lg); font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px; }
+.card-sub   { font-size: var(--fs-sm); color: var(--toss-subtext); line-height: 1.6; }
 
 /* ── 동적 자산 카드 */
 .asset-card { background: var(--toss-gray); border-radius: 14px; padding: 16px; margin-bottom: 10px; position: relative; }
-.asset-card-title { font-size: 13px; font-weight: 700; color: var(--toss-subtext); margin-bottom: 10px; }
-.remove-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 18px; color: #ccc; cursor: pointer; }
+.asset-card-title { font-size: var(--fs-sm); font-weight: 700; color: var(--toss-subtext); margin-bottom: 12px; }
+.remove-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 20px; color: #ccc; cursor: pointer; }
 .text-input {
-  width: 100%; padding: 12px 14px; font-size: 15px;
-  font-family: 'Noto Sans KR', sans-serif;
-  background: #fff; border: 1.5px solid #e0e0e0; border-radius: 12px;
-  outline: none; margin-bottom: 10px; transition: 0.2s;
+  width: 100%; padding: 14px 16px; font-size: var(--fs-md);
+  font-family: inherit;
+  background: #fff; border: 1.5px solid #e0e0e0; border-radius: 14px;
+  outline: none; margin-bottom: 12px; transition: 0.2s;
 }
 .text-input:focus { border-color: var(--purple); }
 .add-btn {
-  width: 100%; padding: 14px; background: #fff;
-  border: 2px dashed #d0d0d0; border-radius: 14px;
-  font-size: 14px; font-weight: 700; color: var(--toss-subtext);
-  cursor: pointer; transition: 0.2s; font-family: 'Noto Sans KR', sans-serif;
+  width: 100%; padding: 16px; background: #fff;
+  border: 2px dashed #d0d0d0; border-radius: 16px;
+  font-size: var(--fs-base); font-weight: 700; color: var(--toss-subtext);
+  cursor: pointer; transition: 0.2s; font-family: inherit;
 }
 .add-btn:hover { border-color: var(--purple); color: var(--purple); }
 
 /* ── 사전증여 항목 */
-.prior-item { background: var(--toss-gray); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-.prior-item-label { font-size: 13px; font-weight: 700; color: var(--toss-subtext); margin-bottom: 8px; }
+.prior-item { background: var(--toss-gray); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.prior-item-label { font-size: var(--fs-sm); font-weight: 700; color: var(--toss-subtext); margin-bottom: 10px; }
 
 /* ── 기본 버튼 */
 .wiz-primary-btn {
-  width: 100%; padding: 18px; border: none; border-radius: 16px;
+  width: 100%; padding: 20px; border: none; border-radius: 18px;
   background: var(--purple); color: #fff;
-  font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 16px;
-  transition: 0.2s; box-shadow: 0 4px 12px rgba(107,53,207,0.2);
-  font-family: 'Noto Sans KR', sans-serif;
+  font-size: var(--fs-lg); font-weight: 800; cursor: pointer; margin-top: 18px;
+  transition: 0.2s; box-shadow: 0 6px 16px rgba(107,53,207,0.25);
+  font-family: inherit; letter-spacing: -0.3px;
 }
 .wiz-primary-btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
 /* ── 거의 다 왔어요 배너 */
 .almost-done {
   background: linear-gradient(135deg, #0f172a, #1e3a5f);
-  border-radius: 14px; padding: 14px 16px; margin-bottom: 20px;
-  color: #fff; font-size: 14px; line-height: 1.6;
+  border-radius: 16px; padding: 16px 18px; margin-bottom: 24px;
+  color: #fff; font-size: var(--fs-sm); line-height: 1.7;
 }
-.almost-done strong { display: block; font-size: 15px; margin-bottom: 3px; color: #fbbf24; }
+.almost-done strong { display: block; font-size: var(--fs-md); margin-bottom: 4px; color: #fbbf24; }
 
 /* ── 분석 선택 버튼 (Step 마지막) */
-.consult-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.consult-btns { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .consult-btn {
-  width: 100%; padding: 20px; border: none; border-radius: 18px;
-  font-size: 17px; font-weight: 700; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif; transition: 0.2s;
-  text-align: left; display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 22px; border: none; border-radius: 20px;
+  font-size: var(--fs-lg); font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: 0.2s;
+  text-align: left; display: flex; align-items: center; gap: 14px;
 }
-.consult-btn .cb-icon { font-size: 24px; }
-.consult-btn .cb-text strong { display: block; font-size: 16px; }
-.consult-btn .cb-text span   { font-size: 13px; opacity: 0.8; }
-.consult-btn.a { background: linear-gradient(135deg,#1845D4,#3182f6); color: #fff; box-shadow: 0 4px 14px rgba(24,69,212,0.3); }
-.consult-btn.b { background: linear-gradient(135deg,#6B35CF,#4527a0); color: #fff; box-shadow: 0 4px 14px rgba(107,53,207,0.3); }
-.consult-btn.c { background: linear-gradient(135deg,#0F7A45,#059669); color: #fff; box-shadow: 0 4px 14px rgba(15,122,69,0.3); }
+.consult-btn .cb-icon { font-size: 28px; }
+.consult-btn .cb-text strong { display: block; font-size: var(--fs-lg); }
+.consult-btn .cb-text span   { font-size: var(--fs-sm); opacity: 0.85; }
+.consult-btn.a { background: linear-gradient(135deg,#1845D4,#3182f6); color: #fff; box-shadow: 0 4px 16px rgba(24,69,212,0.3); }
+.consult-btn.b { background: linear-gradient(135deg,#6B35CF,#4527a0); color: #fff; box-shadow: 0 4px 16px rgba(107,53,207,0.3); }
+.consult-btn.c { background: linear-gradient(135deg,#0F7A45,#059669); color: #fff; box-shadow: 0 4px 16px rgba(15,122,69,0.3); }
 
 /* ════ 결과 화면 ════ */
 #result-screen { display: none; max-width: 540px; margin: 0 auto; padding: 20px 16px 80px; }
-.result-header { background: linear-gradient(135deg,#1e3a5f,#6B35CF); border-radius: 18px; padding: 20px; margin-bottom: 14px; color: #fff; }
-.result-header h2 { font-size: 18px; font-weight: 800; }
-.result-header p  { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+.result-header { background: linear-gradient(135deg,#1e3a5f,#6B35CF); border-radius: 20px; padding: 24px; margin-bottom: 16px; color: #fff; }
+.result-header h2 { font-size: var(--fs-xl); font-weight: 900; letter-spacing: -0.5px; }
+.result-header p  { font-size: var(--fs-sm); opacity: 0.75; margin-top: 6px; }
 
-.tab-bar { display: flex; gap: 6px; margin-bottom: 12px; background: #f2f4f6; border-radius: 14px; padding: 5px; }
+.tab-bar { display: flex; gap: 6px; margin-bottom: 14px; background: #f2f4f6; border-radius: 16px; padding: 5px; }
 .tab-btn {
-  flex: 1; padding: 10px 4px; border: none; border-radius: 10px;
-  font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
-  font-family: 'Noto Sans KR', sans-serif; color: var(--toss-subtext); background: transparent;
+  flex: 1; padding: 13px 4px; border: none; border-radius: 12px;
+  font-size: var(--fs-sm); font-weight: 700; cursor: pointer; transition: 0.2s;
+  font-family: inherit; color: var(--toss-subtext); background: transparent;
 }
 .tab-btn.active { color: #fff; }
 .tab-btn.active.ta { background: var(--blue); }
 .tab-btn.active.tb { background: var(--purple); }
 .tab-btn.active.tc { background: var(--green); }
 
-.ai-result-box { background: #fff; border-radius: 16px; padding: 20px; border: 1px solid #ebebeb; min-height: 180px; margin-bottom: 14px; }
-.ai-content { font-size: 14px; line-height: 1.9; color: #2d2d2d; word-break: keep-all; }
-.ai-error { color: #D93A3A; font-size: 14px; padding: 20px; background: #FFF8F8; border-radius: 12px; border: 1px solid #FFCDD2; text-align: center; line-height: 1.7; }
+.ai-result-box { background: #fff; border-radius: 18px; padding: 22px; border: 1px solid #ebebeb; min-height: 180px; margin-bottom: 16px; }
+.ai-content { font-size: var(--fs-sm); line-height: 1.9; color: #2d2d2d; word-break: keep-all; }
+.ai-error { color: #D93A3A; font-size: var(--fs-sm); padding: 24px; background: #FFF8F8; border-radius: 14px; border: 1px solid #FFCDD2; text-align: center; line-height: 1.8; }
 
-.action-bar { display: flex; flex-direction: column; gap: 8px; }
-.btn-pdf { width: 100%; padding: 17px; border: none; border-radius: 14px; background: linear-gradient(135deg,#6B35CF,#4527a0); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-back-input { width: 100%; padding: 15px; border: none; border-radius: 14px; background: var(--toss-gray); color: var(--toss-text); font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.notice-box { background: #F2F4F6; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #65635E; line-height: 1.65; margin-top: 10px; }
+.action-bar { display: flex; flex-direction: column; gap: 10px; }
+.btn-pdf { width: 100%; padding: 20px; border: none; border-radius: 16px; background: linear-gradient(135deg,#6B35CF,#4527a0); color: #fff; font-size: var(--fs-lg); font-weight: 800; cursor: pointer; font-family: inherit; letter-spacing: -0.3px; }
+.btn-back-input { width: 100%; padding: 18px; border: none; border-radius: 16px; background: var(--toss-gray); color: var(--toss-text); font-size: var(--fs-base); font-weight: 700; cursor: pointer; font-family: inherit; }
+.notice-box { background: #F2F4F6; border-radius: 12px; padding: 13px 16px; font-size: var(--fs-sm); color: #65635E; line-height: 1.7; margin-top: 12px; }
 
 /* 타이핑 커서 */
 .typing-cursor {
@@ -1218,15 +1224,26 @@ function computeInheritance(mode) {
 
   // ── 공제 계산 ──
 
-  // 1. 배우자공제
+  // 1. 배우자공제 (상증세법 제19조)
+  // 공제액 = min(실제상속금액, 법정지분가액, 30억) 단 최소 5억 보장
+  // 실제상속금액: 법정분할=법정지분, 협의분할=배우자에게 집중 배분
   var spouseDeduct = 0;
   if (S.hasSpouse) {
     var n = S.childCount;
     var spouseRatio = n > 0 ? 1.5 / (n + 1.5) : 1;
-    var spouseLegal = taxableBase * spouseRatio - S.priorSpouse;
-    if (spouseLegal < 0) spouseLegal = 0;
-    spouseDeduct = Math.min(spouseLegal, 300000); // 30억 한도 (만원)
-    spouseDeduct = Math.max(spouseDeduct, 50000);  // 최소 5억
+    // 법정지분 기준 배우자 상속액 (사전증여 차감)
+    var spouseLegal = Math.max(0, taxableBase * spouseRatio - S.priorSpouse);
+    // 협의분할(optimal)이면 배우자가 주택 외 자산 집중 → 실제 배분액은 nT+finance+insurance+general 수준
+    var spouseActual;
+    if (mode === 'optimal') {
+      // 배우자 실제 배분 추정: 주택 외 부동산 + 금융 + 기타 (주택은 자녀에게)
+      spouseActual = Math.max(0, (nT + S.finance + S.insurance + S.general) - S.debt - funeral - S.priorSpouse);
+    } else {
+      spouseActual = spouseLegal;
+    }
+    // 공제 한도: min(실제상속액, 법정지분액, 30억)
+    spouseDeduct = Math.min(spouseActual, spouseLegal, 300000);
+    spouseDeduct = Math.max(spouseDeduct, 50000); // 최소 5억
   }
 
   // 2. 일괄공제 vs 기초+인적공제
@@ -1347,11 +1364,7 @@ function generateReportHTML(type) {
   var html = '';
 
   // ── 헤더
-  var headers = {
-    A: '⚖️ A. 법정상속 분석 리포트',
-    B: '🤝 B. 사후 협의분할 분석 리포트',
-    C: '📋 C. 생전 유언(유언공증) 분석 리포트'
-  };
+  var headers = { A: '⚖️ A. 법정상속 분석 리포트', B: '🤝 B. 사후 협의분할 분석 리포트', C: '📋 C. 생전 유언(유언공증) 분석 리포트' };
   var subHeaders = {
     A: '민법상 법정지분(배우자 1.5 : 자녀 각 1)에 따른 상속세·취득세 계산 및 집행 가이드',
     B: '사망 후 상속인 전원 합의로 동거주택·배우자공제를 극대화하는 최적 절세 시나리오',
@@ -1360,15 +1373,11 @@ function generateReportHTML(type) {
   html += '<div class="ai-h1">' + headers[type] + '</div>';
   html += '<div style="font-size:13px;color:var(--toss-subtext);margin-bottom:20px;line-height:1.7;padding:12px 14px;background:rgba(107,53,207,0.04);border-radius:10px;">' + subHeaders[type] + '</div>';
 
-  // ════════════════════════════
-  // 1. 상속현황 정리
-  // ════════════════════════════
+  // ── 1. 상속현황
   html += '<div class="ai-h2">1. 상속현황 정리</div>';
-
-  // 자산 현황 표
   html += '<table><thead><tr><th>구분</th><th>평가액</th><th>비고</th></tr></thead><tbody>';
   if (r.hT > 0)      html += '<tr><td>주택 합계</td><td>' + formatKor(r.hT) + '</td><td>' + (S.hasCohouse ? '✅ 동거주택공제 대상' : '') + '</td></tr>';
-  if (r.nT > 0)      html += '<tr><td>주택 외 부동산</td><td>' + formatKor(r.nT) + '</td><td>' + (r.totalDeposit > 0 ? '임대보증금 ' + formatKor(r.totalDeposit) + ' 포함' : '') + '</td></tr>';
+  if (r.nT > 0)      html += '<tr><td>주택 외 부동산</td><td>' + formatKor(r.nT) + '</td><td>' + (r.totalDeposit > 0 ? '임대보증금 ' + formatKor(r.totalDeposit) : '') + '</td></tr>';
   if (S.finance > 0) html += '<tr><td>금융재산</td><td>' + formatKor(S.finance) + '</td><td>금융재산공제 대상</td></tr>';
   if (S.insurance>0) html += '<tr><td>보험금·퇴직금</td><td>' + formatKor(S.insurance) + '</td><td></td></tr>';
   if (S.general > 0) html += '<tr><td>일반재산</td><td>' + formatKor(S.general) + '</td><td></td></tr>';
@@ -1378,24 +1387,16 @@ function generateReportHTML(type) {
   html += '<tr style="background:rgba(107,53,207,0.06)"><td><strong>상속세 과세가액</strong></td><td><strong>' + formatKor(r.taxableBase) + '</strong></td><td></td></tr>';
   html += '</tbody></table>';
 
-  // 타입별 분할 현황 설명
-  if (type === 'A') {
-    if (S.hasSpouse && n > 0) {
-      var spR = 1.5 / (n + 1.5);
-      var chR = 1 / (n + 1.5);
-      html += '<div class="ai-h3">법정지분 안분 내역</div>';
-      html += '<table><thead><tr><th>상속인</th><th>지분율</th><th>상속액</th></tr></thead><tbody>';
-      html += '<tr><td>배우자</td><td>' + (spR*100).toFixed(2) + '%</td><td>' + formatKor(Math.round(r.taxableBase * spR)) + '</td></tr>';
-      for (var i = 0; i < n; i++) {
-        html += '<tr><td>자녀 ' + (i+1) + '</td><td>' + (chR*100).toFixed(2) + '%</td><td>' + formatKor(Math.round(r.taxableBase * chR)) + '</td></tr>';
-      }
-      html += '</tbody></table>';
-    }
-    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">';
-    html += '법정 지분율에 따라 배우자와 자녀 ' + n + '명이 모든 자산을 균등하게 분할 상속받는 시나리오입니다. 별도의 협의 없이 기계적으로 법정 지분대로 등기를 마칠 경우, 세법상 받을 수 있는 공제 혜택이 대폭 축소됩니다.';
-    html += '</div>';
+  // 타입별 분할 현황
+  if (type === 'A' && S.hasSpouse && n > 0) {
+    var spR = 1.5 / (n + 1.5), chR = 1 / (n + 1.5);
+    html += '<div class="ai-h3">법정지분 안분 내역</div>';
+    html += '<table><thead><tr><th>상속인</th><th>지분율</th><th>상속액</th></tr></thead><tbody>';
+    html += '<tr><td>배우자</td><td>' + (spR*100).toFixed(2) + '%</td><td>' + formatKor(Math.round(r.taxableBase * spR)) + '</td></tr>';
+    for (var i = 0; i < n; i++) html += '<tr><td>자녀 ' + (i+1) + '</td><td>' + (chR*100).toFixed(2) + '%</td><td>' + formatKor(Math.round(r.taxableBase * chR)) + '</td></tr>';
+    html += '</tbody></table>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">법정 지분율에 따라 배우자와 자녀 ' + n + '명이 모든 자산을 균등하게 분할 상속받는 시나리오입니다. 별도 협의 없이 법정 지분대로 등기를 마칠 경우 세법상 공제 혜택이 대폭 축소됩니다.</div>';
   }
-
   if (type === 'B') {
     html += '<div class="ai-h3">협의분할 최적 배분 플랜</div>';
     html += '<table><thead><tr><th>자산</th><th>배분 대상</th><th>이유</th></tr></thead><tbody>';
@@ -1403,137 +1404,105 @@ function generateReportHTML(type) {
     if (r.nT > 0 && S.hasSpouse)  html += '<tr><td>주택 외 부동산 (' + formatKor(r.nT) + ')</td><td><strong>배우자 집중 배분</strong></td><td>배우자공제 극대화</td></tr>';
     if (S.finance > 0 && S.hasSpouse) html += '<tr><td>금융재산 (' + formatKor(S.finance) + ')</td><td>배우자</td><td>배우자공제 한도 확보</td></tr>';
     html += '</tbody></table>';
-    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">';
-    html += '사망 후 상속인 전원의 합의를 통해 아파트를 무주택 동거 자녀에게 100% 단독 상속하고, 상가와 금융자산은 배우자가 집중 상속받는 방식입니다. 6개월의 골든타임 안에 분할협의서를 작성해야 합니다.';
-    html += '</div>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">사망 후 상속인 전원의 합의를 통해 아파트를 무주택 동거 자녀에게 100% 단독 상속하고, 상가와 금융자산은 배우자가 집중 상속받는 방식입니다. 6개월의 골든타임 안에 분할협의서를 작성해야 합니다.</div>';
   }
-
   if (type === 'C') {
     html += '<div class="ai-h3">유언 지정 분할 플랜</div>';
     html += '<table><thead><tr><th>자산</th><th>유언 지정 대상</th><th>효과</th></tr></thead><tbody>';
     if (r.hT > 0 && S.hasCohouse) html += '<tr><td>주택 (' + formatKor(r.hT) + ')</td><td><strong>무주택 동거 자녀 100% 지정</strong></td><td>동거주택공제 확보 + 분쟁 차단</td></tr>';
     if (r.nT > 0 && S.hasSpouse)  html += '<tr><td>주택 외 부동산 (' + formatKor(r.nT) + ')</td><td><strong>배우자 지정</strong></td><td>배우자공제 극대화</td></tr>';
     html += '</tbody></table>';
-    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">';
-    html += '피상속인이 생전에 공증인 앞에서 증인 2명과 함께 유언공정증서를 작성하여, 사후 분할 방식을 법적으로 확정하는 가장 완벽한 셋업입니다. 협의분할(B사례)과 달리 상속인 중 단 1명의 거부로도 깨질 수 없습니다.';
-    html += '</div>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">피상속인이 생전에 공증인 앞에서 증인 2명과 함께 유언공정증서를 작성하여, 사후 분할 방식을 법적으로 확정합니다. 협의분할(B)과 달리 상속인 단 1명의 거부로도 깨질 수 없습니다.</div>';
   }
 
-  // ════════════════════════════
-  // 2. 상속세 계산
-  // ════════════════════════════
+  // ── 2. 상속세 계산
   html += '<div class="ai-h2">2. 상속세 계산</div>';
-
-  // 공제 내역 표
   html += '<div class="ai-h3">상속공제 내역</div>';
   html += '<table><thead><tr><th>공제 항목</th><th>공제액</th><th>비고</th></tr></thead><tbody>';
   html += '<tr><td>' + r.chosenLabel + '</td><td>' + formatKor(r.chosenDeduct) + '</td><td></td></tr>';
   if (S.hasSpouse) html += '<tr><td>배우자 상속공제</td><td>' + formatKor(r.spouseDeduct) + '</td><td>최소 5억 보장</td></tr>';
   if (r.financeDeduct > 0) html += '<tr><td>금융재산 상속공제</td><td>' + formatKor(r.financeDeduct) + '</td><td>순금융재산 기준</td></tr>';
-
   if (r.cohouseDeduct > 0) {
-    var cohouseNote = type === 'A'
-      ? '부채 안분 적용 — 법정분할로 인한 누수 발생'
-      : '자녀 100% 배분 — 6억 한도 전액 확보';
+    var cohouseNote = type === 'A' ? '부채 안분 적용 — 법정분할로 인한 누수 발생' : '자녀 100% 배분 — 6억 한도 전액 확보';
     html += '<tr><td>동거주택 상속공제</td><td>' + formatKor(r.cohouseDeduct) + '</td><td>' + cohouseNote + '</td></tr>';
   }
-
   if (type === 'A' && S.hasCohouse && r.cohouseDeduct < 60000) {
-    var maxCohouse = 60000;
-    var loss = maxCohouse - r.cohouseDeduct;
-    html += '<tr style="background:#fff3cd"><td colspan="2">⚠️ 동거주택공제 누수액</td><td style="color:#856404;font-weight:700;">△' + formatKor(loss) + ' 손실</td></tr>';
+    html += '<tr style="background:#fff3cd"><td colspan="2">⚠️ 동거주택공제 누수액</td><td style="color:#856404;font-weight:700;">△' + formatKor(60000 - r.cohouseDeduct) + ' 손실</td></tr>';
   }
-
   html += '<tr style="background:rgba(107,53,207,0.06)"><td><strong>공제 합계 (종합한도 적용 후)</strong></td><td><strong>' + formatKor(r.totalDeduct) + '</strong></td><td></td></tr>';
   html += '</tbody></table>';
-
   if (r.deductLimit < r.chosenDeduct + r.spouseDeduct + r.financeDeduct + r.cohouseDeduct) {
     html += '<div style="background:#fff3cd;border-radius:10px;padding:10px 14px;font-size:13px;color:#856404;margin:8px 0;">⚠️ 제24조 종합한도 ' + formatKor(r.deductLimit) + '으로 제한 — 사전증여로 인한 공제 한도 축소</div>';
   }
 
-  // 세액 계산 근거 (아코디언)
-  html += '<div class="ai-h3">🧮 세액 계산 근거</div>';
-
-  // 세율 구간 및 누진공제액 계산
+  // 세율 계산 (요약 박스 + 아코디언 모두 사용)
   var txWon = r.taxStandard * 10000;
   var rateStr, progressStr, taxFormula;
-  if (txWon <= 100000000) {
-    rateStr = '10%'; progressStr = '0원'; taxFormula = formatKor(r.taxStandard) + ' × 10% = ' + formatKor(Math.round(r.grossTax/10000));
-  } else if (txWon <= 500000000) {
-    rateStr = '20%'; progressStr = '1,000만원'; taxFormula = formatKor(r.taxStandard) + ' × 20% − 1,000만원 = ' + formatKor(Math.round(r.grossTax/10000));
-  } else if (txWon <= 1000000000) {
-    rateStr = '30%'; progressStr = '6,000만원'; taxFormula = formatKor(r.taxStandard) + ' × 30% − 6,000만원 = ' + formatKor(Math.round(r.grossTax/10000));
-  } else if (txWon <= 3000000000) {
-    rateStr = '40%'; progressStr = '1억 6,000만원'; taxFormula = formatKor(r.taxStandard) + ' × 40% − 1억 6,000만원 = ' + formatKor(Math.round(r.grossTax/10000));
-  } else {
-    rateStr = '50%'; progressStr = '4억 6,000만원'; taxFormula = formatKor(r.taxStandard) + ' × 50% − 4억 6,000만원 = ' + formatKor(Math.round(r.grossTax/10000));
-  }
+  if (txWon <= 100000000)       { rateStr='10%'; progressStr='0원'; taxFormula=formatKor(r.taxStandard)+' × 10% = '+formatKor(Math.round(r.grossTax/10000)); }
+  else if (txWon <= 500000000)  { rateStr='20%'; progressStr='1,000만원'; taxFormula=formatKor(r.taxStandard)+' × 20% − 1,000만원 = '+formatKor(Math.round(r.grossTax/10000)); }
+  else if (txWon <= 1000000000) { rateStr='30%'; progressStr='6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 30% − 6,000만원 = '+formatKor(Math.round(r.grossTax/10000)); }
+  else if (txWon <= 3000000000) { rateStr='40%'; progressStr='1억 6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 40% − 1억 6,000만원 = '+formatKor(Math.round(r.grossTax/10000)); }
+  else                          { rateStr='50%'; progressStr='4억 6,000만원'; taxFormula=formatKor(r.taxStandard)+' × 50% − 4억 6,000만원 = '+formatKor(Math.round(r.grossTax/10000)); }
+
+  // 최종 납부세액 요약 박스
+  html += '<div style="background:linear-gradient(135deg,rgba(107,53,207,0.08),rgba(107,53,207,0.03));border-radius:14px;padding:18px;margin:12px 0;border:1.5px solid rgba(107,53,207,0.2);">';
+  html += '<div style="font-size:12px;color:var(--toss-subtext);font-weight:600;margin-bottom:6px;">상속세 최종 납부세액</div>';
+  html += '<div style="font-size:28px;font-weight:900;color:var(--purple);">' + formatKor(r.finalTax) + '</div>';
+  html += '<div style="font-size:12px;color:var(--toss-subtext);margin-top:6px;">과세표준 ' + formatKor(r.taxStandard) + ' × ' + rateStr + ' — 신고공제 3% 적용 후</div>';
+  html += '</div>';
+
+  html += '<div class="ai-h3">🧮 세액 계산 근거</div>';
+  var txWon2 = txWon; // already calculated above
 
   html += '<details style="background:#f8f9fa;border-radius:10px;border:1px solid #e0e0e0;margin-bottom:8px;overflow:hidden;">';
-  html += '<summary style="padding:12px 16px;font-size:13px;font-weight:700;cursor:pointer;color:var(--purple);list-style:none;display:flex;justify-content:space-between;align-items:center;">📐 상속세 계산 근거 상세 보기 <span>▼</span></summary>';
-  html += '<div style="padding:14px 16px;font-size:13px;line-height:2.2;border-top:1px solid #e0e0e0;">';
-  html += '<div style="font-family:monospace;background:#fff;border-radius:8px;padding:12px;border:1px solid #e8e8e8;">';
-  html += '① 과세가액     = ' + formatKor(r.grossAsset) + ' − ' + formatKor(r.debt + r.funeral) + (r.priorTotal>0?' + '+formatKor(r.priorTotal):'') + '<br>';
-  html += '             = <strong>' + formatKor(r.taxableBase) + '</strong><br><br>';
-  html += '② 상속공제     = ' + formatKor(r.chosenDeduct) + (S.hasSpouse?' + '+formatKor(r.spouseDeduct):'') + (r.financeDeduct>0?' + '+formatKor(r.financeDeduct):'') + (r.cohouseDeduct>0?' + '+formatKor(r.cohouseDeduct):'') + '<br>';
-  if (r.totalDeduct < r.chosenDeduct + r.spouseDeduct + r.financeDeduct + r.cohouseDeduct) {
-    html += '   ※ 종합한도 적용: min(합계, ' + formatKor(r.deductLimit) + ') = <strong>' + formatKor(r.totalDeduct) + '</strong><br><br>';
-  } else {
-    html += '             = <strong>' + formatKor(r.totalDeduct) + '</strong><br><br>';
-  }
-  html += '③ 과세표준     = ' + formatKor(r.taxableBase) + ' − ' + formatKor(r.totalDeduct) + ' = <strong>' + formatKor(r.taxStandard) + '</strong><br><br>';
-  html += '④ 산출세액     = ' + taxFormula + '<br>';
-  html += '   적용세율: <strong>' + rateStr + '</strong> / 누진공제액: <strong>' + progressStr + '</strong><br><br>';
-  html += '⑤ 신고세액공제 = ' + formatKor(Math.round(r.grossTax/10000)) + ' × 3% = △<strong>' + formatKor(Math.round(r.reportDeduct/10000)) + '</strong><br>';
+  html += '<summary style="padding:12px 16px;font-size:13px;font-weight:700;cursor:pointer;color:var(--purple);list-style:none;">📐 상속세 계산 근거 상세 보기 ▼</summary>';
+  html += '<div style="padding:14px 16px;font-size:13px;line-height:2.2;border-top:1px solid #e0e0e0;"><div style="font-family:monospace;background:#fff;border-radius:8px;padding:12px;border:1px solid #e8e8e8;">';
+  html += '① 과세가액 = ' + formatKor(r.grossAsset) + ' − ' + formatKor(r.debt + r.funeral) + (r.priorTotal>0?' + '+formatKor(r.priorTotal):'') + ' = <strong>' + formatKor(r.taxableBase) + '</strong><br><br>';
+  html += '② 상속공제 = ' + formatKor(r.chosenDeduct) + (S.hasSpouse?' + '+formatKor(r.spouseDeduct):'') + (r.financeDeduct>0?' + '+formatKor(r.financeDeduct):'') + (r.cohouseDeduct>0?' + '+formatKor(r.cohouseDeduct):'') + ' = <strong>' + formatKor(r.totalDeduct) + '</strong><br><br>';
+  html += '③ 과세표준 = ' + formatKor(r.taxableBase) + ' − ' + formatKor(r.totalDeduct) + ' = <strong>' + formatKor(r.taxStandard) + '</strong><br><br>';
+  html += '④ 산출세액 = ' + taxFormula + '<br>   적용세율: <strong>' + rateStr + '</strong> / 누진공제액: <strong>' + progressStr + '</strong><br><br>';
+  html += '⑤ 신고세액공제 3% = △<strong>' + formatKor(Math.round(r.reportDeduct/10000)) + '</strong><br>';
   if (r.priorTaxPaid > 0) html += '⑥ 기납부증여세 = △<strong>' + formatKor(Math.round(r.priorTaxPaid/10000)) + '</strong><br>';
-  html += '</div>';
-  html += '<div style="font-size:16px;font-weight:900;color:var(--purple);margin-top:12px;text-align:center;">최종 납부세액 = <strong>' + formatKor(r.finalTax) + '</strong></div>';
-  html += '</div></details>';
+  html += '</div><div style="font-size:16px;font-weight:900;color:var(--purple);margin-top:12px;text-align:center;">최종 납부세액 = <strong>' + formatKor(r.finalTax) + '</strong></div></div></details>';
 
   // 취득세 아코디언
   if (r.acqDetails.length > 0) {
     html += '<details style="background:#f8f9fa;border-radius:10px;border:1px solid #e0e0e0;margin-bottom:8px;overflow:hidden;">';
-    html += '<summary style="padding:12px 16px;font-size:13px;font-weight:700;cursor:pointer;color:var(--purple);list-style:none;display:flex;justify-content:space-between;align-items:center;">📐 취득세 계산 근거 상세 보기 <span>▼</span></summary>';
-    html += '<div style="padding:14px 16px;font-size:13px;line-height:2.2;border-top:1px solid #e0e0e0;">';
-    html += '<div style="font-family:monospace;background:#fff;border-radius:8px;padding:12px;border:1px solid #e8e8e8;">';
+    html += '<summary style="padding:12px 16px;font-size:13px;font-weight:700;cursor:pointer;color:var(--purple);list-style:none;">📐 취득세 계산 근거 상세 보기 ▼</summary>';
+    html += '<div style="padding:14px 16px;font-size:13px;line-height:2.2;border-top:1px solid #e0e0e0;"><div style="font-family:monospace;background:#fff;border-radius:8px;padding:12px;border:1px solid #e8e8e8;">';
     r.acqDetails.forEach(function(a) {
-      html += a.name + '<br>';
-      html += '= ' + formatKor(a.value) + ' × ' + a.rate + ' = <strong>' + formatKor(Math.round(a.tax)) + '</strong><br>';
-      if (a.rate === '0.8%') html += '   ※ 무주택 자녀 특례(지방세법 제15조) — 일반세율 2.8% 대비 ' + formatKor(Math.round(a.value * 0.02)) + ' 절감<br>';
+      html += a.name + '<br>= ' + formatKor(a.value) + ' × ' + a.rate + ' = <strong>' + formatKor(Math.round(a.tax)) + '</strong><br>';
+      if (a.rate === '0.8%') html += '   ※ 무주택 자녀 특례 — 일반세율 2.8% 대비 ' + formatKor(Math.round(a.value * 0.02)) + ' 절감<br>';
       html += '<br>';
     });
-    html += '취득세 합계 = <strong>' + formatKor(Math.round(r.acquisitionTax)) + '</strong>';
-    html += '</div>';
-    html += '</div></details>';
+    html += '취득세 합계 = <strong>' + formatKor(Math.round(r.acquisitionTax)) + '</strong></div></div></details>';
   }
 
-  // B/C: 절세 효과 박스
+  // B/C 절세 효과
   if ((type === 'B' || type === 'C') && rL) {
     var saving = rL.finalTax - r.finalTax;
     if (saving > 0) {
       html += '<div style="background:linear-gradient(135deg,rgba(15,122,69,0.12),rgba(15,122,69,0.04));border-radius:14px;padding:18px;margin:14px 0;border:1.5px solid rgba(15,122,69,0.25);">';
       html += '<div style="font-size:12px;color:#0F7A45;font-weight:700;margin-bottom:6px;">법정상속 대비 절세 효과</div>';
       html += '<div style="font-size:26px;font-weight:900;color:#0F7A45;">💰 ' + formatKor(saving) + ' 절세</div>';
-      html += '<div style="font-size:12px;color:#6b7280;margin-top:6px;">법정상속 납부세액 ' + formatKor(rL.finalTax) + ' → ' + (type==='B'?'협의분할':'유언상속') + ' ' + formatKor(r.finalTax) + '</div>';
+      html += '<div style="font-size:12px;color:#6b7280;margin-top:6px;">법정상속 ' + formatKor(rL.finalTax) + ' → ' + (type==='B'?'협의분할':'유언상속') + ' ' + formatKor(r.finalTax) + '</div>';
       html += '</div>';
     }
   }
 
-  // A: 리스크 경고
+  // A 리스크 경고
   if (type === 'A') {
     html += '<div style="background:#FFF3F3;border:1.5px solid #FFCDD2;border-radius:12px;padding:16px;margin:12px 0;">';
     html += '<div style="font-size:14px;font-weight:800;color:#C62828;margin-bottom:8px;">⚠️ 법정상속의 세무적 리스크</div>';
     html += '<ul style="font-size:13px;color:#6b0000;line-height:2;">';
-    if (S.hasCohouse) html += '<li>동거주택공제가 부채 안분으로 <strong>' + formatKor(r.cohouseDeduct) + '</strong>만 적용 (최대 6억 미달, ' + formatKor(60000 - r.cohouseDeduct) + ' 누수)</li>';
+    if (S.hasCohouse) html += '<li>동거주택공제 <strong>' + formatKor(r.cohouseDeduct) + '</strong>만 적용 (최대 6억 미달, ' + formatKor(60000 - r.cohouseDeduct) + ' 누수)</li>';
     html += '<li>배우자·자녀 지분 혼재로 아파트 향후 처분 시 전원 합의 필요</li>';
     html += '<li>협의분할 전환 기한: 상속개시일로부터 <strong>6개월 이내</strong></li>';
     html += '<li>가족 간 분할협의 없이 등기를 치는 것은 <strong>절세 전략상 최악의 선택</strong></li>';
     html += '</ul></div>';
   }
 
-  // ════════════════════════════
-  // 3. 취득세 계산
-  // ════════════════════════════
+  // ── 3. 취득세
   html += '<div class="ai-h2">3. 취득세 계산</div>';
   html += '<table><thead><tr><th>자산</th><th>평가액</th><th>세율</th><th>취득세</th><th>비고</th></tr></thead><tbody>';
   r.acqDetails.forEach(function(a) {
@@ -1542,30 +1511,25 @@ function generateReportHTML(type) {
   });
   html += '<tr style="background:rgba(107,53,207,0.06)"><td colspan="3"><strong>취득세 합계</strong></td><td><strong>' + formatKor(Math.round(r.acquisitionTax)) + '</strong></td><td></td></tr>';
   html += '</tbody></table>';
-
   if (type === 'A' && S.hasCohouse) {
     var normalTax = Math.round(r.hT * 0.028);
     var specialTax = Math.round(r.hT * 0.008);
     html += '<div style="font-size:13px;color:#856404;background:#fff3cd;border-radius:10px;padding:10px 14px;margin-top:8px;">⚠️ 무주택 특례(0.8%) 미적용 시 취득세 ' + formatKor(normalTax) + ' — 협의분할 시 ' + formatKor(normalTax - specialTax) + ' 추가 절감 가능</div>';
   }
 
-  // ════════════════════════════
-  // 4. 실전 집행 가이드
-  // ════════════════════════════
+  // ── 4. 실전 집행 가이드
   html += '<div class="ai-h2">4. 실전 집행 가이드</div>';
   html += '<table><thead><tr><th>기한</th><th>할 일</th><th>필수 서류</th></tr></thead><tbody>';
   html += '<tr><td>즉시</td><td>상속재산 목록 작성, 금융기관 사망 신고</td><td>사망진단서, 가족관계증명서</td></tr>';
   if (type === 'B') html += '<tr><td style="color:#C62828;font-weight:700;">5개월 이내</td><td><strong>분할협의서 작성 — 전원 인감 날인 필수</strong></td><td>분할협의서, 인감증명서 각 1통</td></tr>';
   html += '<tr><td style="color:#C62828;font-weight:700;">6개월 이내</td><td><strong>취득세 신고·납부 / 상속세 신고·납부</strong></td><td>상속세 신고서, 재산평가서</td></tr>';
   html += '<tr><td>9개월 이내</td><td>배우자 명의 등기 완료 (5억 초과 공제 조건)</td><td>등기신청서, 취득세 납부확인서</td></tr>';
-  if (type === 'C') html += '<tr><td>사전 (생전)</td><td><strong>유언공정증서 작성 (공증인 + 증인 2명)</strong></td><td>유언공정증서 — 자필·녹음 유언은 요건 미비 시 무효</td></tr>';
+  if (type === 'C') html += '<tr><td>사전 (생전)</td><td><strong>유언공정증서 작성 (공증인 + 증인 2명)</strong></td><td>유언공정증서</td></tr>';
   html += '<tr><td>납세 어려울 시</td><td>연부연납 신청 (최대 10년 분할 납부)</td><td>연부연납 신청서</td></tr>';
   html += '</tbody></table>';
 
-  // ════════════════════════════
-  // 5. 향후 추가 절세 시나리오
-  // ════════════════════════════
-  html += '<div class="ai-h2">5. 향후 추가 절세 시나리오</div>';
+  // ── 5. 향후 절세 시나리오
+  html += '<div class="ai-h2">5. ' + (type==='C'?'추가 사전증여를 통한 절세 컨설팅':'향후 추가 절세 시나리오') + '</div>';
 
   if (type === 'A') {
     html += '<div style="font-size:13px;line-height:2;padding:14px;background:#f8f9fa;border-radius:10px;">';
@@ -1582,75 +1546,63 @@ function generateReportHTML(type) {
   }
 
   if (type === 'C') {
-    html += '<div class="ai-h2">5. 추가 사전증여를 통한 절세 컨설팅</div>';
-
-    var monthlyRent = r.totalRent > 0 ? r.totalRent : 500;
-    var annualRent  = monthlyRent * 12;
-    var rent10yr    = annualRent * 10;
+    var mRent = r.totalRent > 0 ? r.totalRent : 0;
+    var aRent = mRent * 12;
+    var r10yr = aRent * 10;
+    var cNum = S.childCount > 0 ? S.childCount : 1;
+    var recGift = Math.min(r.nT * 0.1, 15000 * cNum);
+    var giftTax = Math.max(0, (recGift / cNum - 5000)) * 0.1 * cNum;
+    var spRatio2 = S.childCount > 0 ? 1.5 / (S.childCount + 1.5) : 1;
+    var spAsset = Math.round(r.taxableBase * spRatio2);
+    var targetRed = Math.max(0, spAsset - 50000);
 
     html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px 14px;background:rgba(107,53,207,0.04);border-radius:10px;margin-bottom:14px;">';
-    html += '어머니 명의로 상가를 넘긴 후, 2차 상속세 폭탄을 무력화하기 위한 생전 추가 사전증여 설계입니다. 상가에서 나오는 <strong>월세 ' + formatKor(monthlyRent) + '</strong>이 핵심 열쇠입니다.';
+    html += '어머니 명의로 상가(' + formatKor(r.nT) + ')를 넘긴 후, 2차 상속세 폭탄을 무력화하기 위한 생전 추가 사전증여 설계입니다.';
+    if (mRent > 0) html += ' 상가에서 나오는 <strong>월세 ' + formatKor(mRent) + '</strong>이 핵심 열쇠입니다.';
     html += '</div>';
 
-    // 절세 핵심 순서 플로우
     html += '<div class="ai-h3">절세 핵심 순서</div>';
     html += '<div style="background:#f8f9fa;border-radius:12px;padding:16px;font-size:13px;line-height:2.4;border:1px solid #e0e0e0;font-family:monospace;">';
-    html += '어머니 상가 단독 상속<br>';
-    html += '&nbsp;&nbsp;&nbsp;└── ① 상가 지분 일부를 자녀에게 즉시 증여 (10% 세율 구간 활용)<br>';
-    html += '&nbsp;&nbsp;&nbsp;└── ② 매월 월세 ' + formatKor(monthlyRent) + '의 귀속처를 자녀 명의로 합법적 변경<br>';
+    html += '어머니 상가(' + formatKor(r.nT) + ') 단독 상속<br>';
+    html += '&nbsp;&nbsp;&nbsp;└── ① 상가 지분 <strong>' + formatKor(recGift) + '</strong> 자녀에게 즉시 증여 (10% 세율 구간 활용)<br>';
+    if (mRent > 0) html += '&nbsp;&nbsp;&nbsp;└── ② 매월 월세 ' + formatKor(mRent) + '의 귀속처를 자녀 명의로 합법적 변경<br>';
     html += '&nbsp;&nbsp;&nbsp;└── ③ 어머니 최종 자산 5억원 이하 조절 ──▶ <strong style="color:#0F7A45;">2차 상속세 "0원" 달성</strong>';
     html += '</div>';
 
     html += '<div class="ai-h3">세부 실행 전략</div>';
-
-    // 전략 1
     html += '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;border:1.5px solid #e8e8e8;">';
-    html += '<div style="font-size:14px;font-weight:800;color:var(--toss-text);margin-bottom:8px;">① 소액 지분 즉시 증여</div>';
-    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">';
-    html += '상가 지분 중 약 <strong>1억~1억 5,000만원</strong>에 해당하는 지분을 자녀들에게 즉시 추가 사전증여합니다.<br>';
-    html += '성년 자녀 증여세 <strong>10% 세율 구간</strong>을 활용해 아주 적은 세금만 내고 상가 지분을 쪼갭니다.<br>';
-    html += '<span style="font-size:12px;background:#e8f5e9;border-radius:6px;padding:3px 8px;color:#2e7d32;">증여세 예상: 약 500만~1,000만원 수준 (성년 자녀 공제 5천만원 활용)</span>';
-    html += '</div></div>';
+    html += '<div style="font-size:14px;font-weight:800;margin-bottom:8px;">① 소액 지분 즉시 증여</div>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">상가 지분 중 약 <strong>' + formatKor(recGift) + '</strong>을 자녀 ' + cNum + '명에게 즉시 증여합니다.<br>성년 자녀 1인당 5,000만원 공제 후 <strong>10% 세율</strong> 적용 — 예상 증여세 약 <strong>' + formatKor(Math.round(giftTax)) + '</strong> 수준입니다.</div></div>';
 
-    // 전략 2
-    html += '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;border:1.5px solid #e8e8e8;">';
-    html += '<div style="font-size:14px;font-weight:800;color:var(--toss-text);margin-bottom:8px;">② 월세 수입의 분산 <span style="font-size:12px;color:#C62828;font-weight:700;">(가장 중요)</span></div>';
-    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">';
-    html += '지분을 쪼개는 순간, 매달 나오는 월세 중 지분만큼이 자녀들의 <strong>합법적인 소득</strong>으로 잡힙니다.<br>';
-    html += '<strong style="color:#C62828;">⚠️ 증여 안 할 경우:</strong> 어머니 통장에 연 ' + formatKor(annualRent) + ', 10년에 <strong>' + formatKor(rent10yr) + '</strong>의 현금이 쌓여 2차 상속세를 무시무시하게 키웁니다.<br>';
-    html += '이 현금 흐름을 자녀에게로 돌려야 합니다.';
-    html += '</div></div>';
+    if (mRent > 0) {
+      html += '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;border:1.5px solid #e8e8e8;">';
+      html += '<div style="font-size:14px;font-weight:800;margin-bottom:8px;">② 월세 수입의 분산 <span style="font-size:12px;color:#C62828;font-weight:700;">(가장 중요)</span></div>';
+      html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">지분을 쪼개는 순간, 매달 <strong>' + formatKor(mRent) + '</strong> 중 지분만큼이 자녀들의 합법적인 소득으로 잡힙니다.<br><strong style="color:#C62828;">⚠️ 증여 안 할 경우:</strong> 어머니 통장에 연 <strong>' + formatKor(aRent) + '</strong>, 10년에 <strong>' + formatKor(r10yr) + '</strong>의 현금이 쌓여 2차 상속세를 키웁니다.</div></div>';
+    }
 
-    // 전략 3
     html += '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;border:1.5px solid #e8e8e8;">';
-    html += '<div style="font-size:14px;font-weight:800;color:var(--toss-text);margin-bottom:8px;">③ 10년 주기 리셋 전략</div>';
-    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">';
-    html += '어머니가 향후 <strong>10년 이상 건강하게 생존</strong>하신다면, 10년 주기로 상가 지분을 추가 증여하여<br>';
-    html += '어머니 사망 시점의 최종 재산을 <strong>5억원 이하</strong>로 떨어뜨립니다.<br>';
-    html += '<div style="margin-top:8px;padding:10px;background:linear-gradient(135deg,rgba(15,122,69,0.1),rgba(15,122,69,0.05));border-radius:8px;color:#0F7A45;font-weight:800;font-size:14px;text-align:center;">🎯 결과: 2차 상속세 최종 0원 달성</div>';
-    html += '</div></div>';
+    html += '<div style="font-size:14px;font-weight:800;margin-bottom:8px;">③ 10년 주기 리셋 전략</div>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">현재 어머니 예상 상속 자산: <strong>' + formatKor(spAsset) + '</strong><br>';
+    if (targetRed > 0) html += '2차 상속세 0원 달성을 위해 <strong>' + formatKor(targetRed) + '</strong>을 추가로 줄여야 합니다.<br>';
+    html += '10년 주기로 상가 지분을 추가 증여하여 어머니 사망 시점 최종 재산을 <strong>5억원 이하</strong>로 조절합니다.<br>';
+    html += '<div style="margin-top:8px;padding:10px;background:linear-gradient(135deg,rgba(15,122,69,0.1),rgba(15,122,69,0.05));border-radius:8px;color:#0F7A45;font-weight:800;font-size:14px;text-align:center;">🎯 결과: 2차 상속세 최종 0원 달성</div></div></div>';
 
-    // 타임라인
     html += '<div class="ai-h3">실행 타임라인</div>';
     html += '<table><thead><tr><th>시점</th><th>실행 내용</th><th>효과</th></tr></thead><tbody>';
-    html += '<tr><td><strong>즉시</strong></td><td>상가 지분 1억~1.5억 자녀 증여</td><td>월세 흐름 분산 시작</td></tr>';
-    html += '<tr><td>매년</td><td>월세 ' + formatKor(monthlyRent) + '/월 → 자녀 귀속 (지분 비례)</td><td>어머니 자산 증가 차단</td></tr>';
+    html += '<tr><td><strong>즉시</strong></td><td>상가 지분 ' + formatKor(recGift) + ' 자녀 ' + cNum + '명에게 증여</td><td>월세 흐름 분산 시작</td></tr>';
+    if (mRent > 0) html += '<tr><td>매년</td><td>월세 ' + formatKor(mRent) + '/월 → 자녀 귀속</td><td>어머니 자산 증가 차단 (연 ' + formatKor(aRent) + ')</td></tr>';
     html += '<tr><td>10년 후</td><td>상가 지분 추가 증여 (10년 주기)</td><td>2차 상속 과세표준 축소</td></tr>';
     html += '<tr><td><strong>장기 목표</strong></td><td>어머니 잔여 자산 5억원 이하 유지</td><td style="color:#0F7A45;font-weight:800;">2차 상속세 0원</td></tr>';
     html += '</tbody></table>';
   }
 
-  // ════════════════════════════
-  // 6. 결론 및 이유
-  // ════════════════════════════
+  // ── 6. 결론 및 이유
   html += '<div class="ai-h2">6. 시나리오 결론 및 이유</div>';
-
   var reasons = {
-    A: '법정상속은 가족 간 협의 없이 사망 직후 자동으로 적용되는 가장 간단한 방식이지만, 세법상 혜택을 스스로 걷어차는 결과를 낳습니다. 동거주택공제와 취득세 감면은 "실제 누가 어떤 자산을 물려받느냐"를 기준으로 혜택을 줍니다. 지분이 분산될수록 혜택은 희석되고 부채는 강제로 안분되어 세금이 최대로 나오게 됩니다. <strong>지금이라도 6개월 내 협의분할로 전환하면 상황을 역전시킬 수 있습니다.</strong>',
-    B: '기계적인 법정상속은 동거주택공제와 취득세 혜택을 무참히 찢어버립니다. 아무리 슬프고 경황이 없더라도 6개월의 골든타임 안에 "아파트는 특정 자녀에게 몰아준다"는 분할협의서를 작성해야만 국세청이 주는 수억 원의 혜택을 챙길 수 있습니다. <strong>단, 협의분할의 치명적 약점은 상속인 중 단 1명이라도 도장을 안 찍으면 즉시 깨진다는 것입니다. 가족 간 갈등이 우려된다면 C사례(유언)를 검토하시기 바랍니다.</strong>',
-    C: '협의분할(B)의 치명적 약점은 상속인 중 단 1명의 거부로도 합의가 깨진다는 점입니다. 돈 앞에서는 형제도 돌변할 수 있습니다. 생전에 아버지가 법적 구속력을 가진 유언공증으로 쐐기를 박아두면, 사후 분쟁을 100% 차단하면서 동시에 동거주택공제·취득세 감면 등 모든 세금 혜택을 강제로 챙겨올 수 있습니다. <strong>이것이 가장 확실하고 완벽한 절세의 정석입니다.</strong>'
+    A: '법정상속은 가족 간 협의 없이 사망 직후 자동으로 적용되는 가장 간단한 방식이지만, 세법상 혜택을 스스로 걷어차는 결과를 낳습니다. 지분이 분산될수록 혜택은 희석되고 부채는 강제로 안분되어 세금이 최대로 나오게 됩니다. <strong>지금이라도 6개월 내 협의분할로 전환하면 상황을 역전시킬 수 있습니다.</strong>',
+    B: '기계적인 법정상속은 동거주택공제와 취득세 혜택을 무참히 찢어버립니다. 6개월의 골든타임 안에 분할협의서를 작성해야만 수억 원의 혜택을 챙길 수 있습니다. <strong>단, 협의분할의 치명적 약점은 상속인 중 단 1명이라도 도장을 안 찍으면 즉시 깨진다는 것입니다.</strong>',
+    C: '협의분할(B)의 치명적 약점은 상속인 중 단 1명의 거부로도 합의가 깨진다는 점입니다. 생전에 유언공증으로 쐐기를 박아두면, 사후 분쟁을 100% 차단하면서 동시에 모든 세금 혜택을 강제로 챙겨올 수 있습니다. <strong>이것이 가장 확실하고 완벽한 절세의 정석입니다.</strong>'
   };
-
   html += '<div style="font-size:14px;line-height:2;padding:16px;background:linear-gradient(135deg,rgba(107,53,207,0.06),rgba(107,53,207,0.02));border-radius:12px;border-left:4px solid var(--purple);">' + reasons[type] + '</div>';
 
   // ── 임대 현황
@@ -1661,18 +1613,21 @@ function generateReportHTML(type) {
   }
 
   // ── 절세 가이드 배너
+  var bRent = r.totalRent > 0 ? r.totalRent : 0;
   html += '<div style="background:linear-gradient(135deg,#1e3a5f,#6B35CF);border-radius:14px;padding:18px;margin-top:16px;color:#fff;font-size:13px;line-height:1.9;">';
   html += '<strong style="color:#fbbf24;font-size:14px;display:block;margin-bottom:6px;">💡 AI 실전 절세 가이드</strong>';
   if (r.cohouseDeduct > 0 && type !== 'A') html += '동거주택공제 <strong>' + formatKor(r.cohouseDeduct) + '</strong> — 아파트 지분을 무주택 동거 자녀에게 100% 유지 필수<br>';
   if (type === 'A' && S.hasCohouse) html += '⚠️ 법정분할 유지 시 동거주택공제 ' + formatKor(60000 - r.cohouseDeduct) + ' 누수 — 협의분할 전환 강력 권고<br>';
-  html += '가치 상승 예상 자산(재개발 지분·우량주식)을 우선 증여 — 증여 당시 가격으로 합산, 상승분 세금 완전 방어<br>';
-  if (r.priorTotal > 0) html += '⚠️ 사전증여 ' + formatKor(r.priorTotal) + ' — 공제 종합한도 축소 발생. 10년 이후 추가 증여 시 과세가액에서 완전 제외';
+  html += '가치 상승 예상 자산을 우선 증여 — 증여 당시 가격으로 합산, 상승분 세금 완전 방어<br>';
+  if (r.priorTotal > 0) html += '⚠️ 사전증여 ' + formatKor(r.priorTotal) + ' — 공제 종합한도 축소 발생. 10년 이후 추가 증여 시 완전 제외';
+  if (type === 'C' && bRent > 0) html += '<br>💰 월세 ' + formatKor(bRent) + ' → 자녀 귀속 전환 시 연 ' + formatKor(bRent*12) + ' 어머니 자산 증가 차단';
   html += '</div>';
 
   html += '<div class="notice-box" style="margin-top:14px;">※ 본 분석은 입력값 기반 자동 계산 결과로, 실제 세액은 개별 상황에 따라 달라질 수 있습니다. 정확한 신고를 위해 담당 세무사 확인을 권장합니다.</div>';
 
   return html;
 }
+
 // ── API 호출 대신 즉시 렌더링
 function callAI(type) {
   var t = type.toLowerCase();
