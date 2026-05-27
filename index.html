@@ -1181,447 +1181,525 @@ function collectAll() {
 }
 
 // ════════════════════════════════════════════
-//  사용자 프롬프트 생성
+//  상속세 계산 엔진 (알고리즘 기반)
 // ════════════════════════════════════════════
-function buildPrompt(type) {
-  var hT = S.houses.reduce(function(s,h){return s+h.value;},0);
-  var nT = S.nhouses.reduce(function(s,h){return s+h.value;},0);
-  var total = hT + nT + S.finance + S.insurance + S.general;
-  var hDesc = S.houses.length ? S.houses.map(function(h,i){ return '주택'+(i+1)+(h.name?'('+h.name+')':'')+': '+formatKor(h.value); }).join(', ') : '없음';
 
-  // 주택 외 부동산: 보증금·월차임 포함
-  var nDesc = '없음';
-  var totalDeposit = 0;
-  var totalRent = 0;
-  if (S.nhouses.length) {
-    nDesc = S.nhouses.map(function(h, i) {
-      var s = '부동산'+(i+1)+(h.name?'('+h.name+')':'')+': '+formatKor(h.value);
-      if (h.deposit > 0) { s += ' / 보증금: '+formatKor(h.deposit); totalDeposit += h.deposit; }
-      if (h.rent > 0)    { s += ' / 월차임: '+formatKor(h.rent)+'(월)'; totalRent += h.rent; }
-      return s;
-    }).join('\n   ');
-  }
 
-  var priorDesc = '';
-  if (S.priorSpouse > 0) priorDesc += '배우자: ' + formatKor(S.priorSpouse) + ' ';
-  S.priorChildren.forEach(function(c){ if(c.amount>0) priorDesc += c.name+': '+formatKor(c.amount)+' '; });
-  if (!priorDesc) priorDesc = '없음';
-  var typeLabel = {A:'A. 법정지분 상속', B:'B. 사후 협의분할 컨설팅', C:'C. 사전 협의분할/유언에 대한 컨설팅'}[type];
+// 만원 단위 → 원 단위 변환
+function toWon(manWon) { return manWon * 10000; }
 
-  return '=== 상속세 AI 컨설팅 요청 ===\n\n' +
-    '[상속인 정보]\n- 배우자: '+(S.hasSpouse?'있음':'없음')+'\n- 자녀: '+S.childCount+'명 (미성년 '+S.minorCount+'명)\n\n' +
-    '[자산 현황]\n- 주택: '+hDesc+' (합계: '+formatKor(hT)+')\n- 주택 외 부동산:\n   '+nDesc+'\n   (합계: '+formatKor(nT)+')\n- 금융재산: '+formatKor(S.finance)+'\n- 사망보험금·퇴직금: '+formatKor(S.insurance)+'\n- 일반재산: '+formatKor(S.general)+'\n- 총 자산: '+formatKor(total)+'\n\n' +
-    '[임대 현황]\n' +
-    (totalDeposit > 0 ? '- 임대보증금 합계: '+formatKor(totalDeposit)+' (상속 채무로 과세가액 차감 대상, 단 금융채무 아니므로 금융재산공제 계산 시 제외)\n' : '- 임대보증금: 없음\n') +
-    (totalRent > 0 ? '- 월차임 합계: '+formatKor(totalRent)+'(월) / 연간 약 '+formatKor(totalRent*12)+'(연)\n' : '- 월차임: 없음\n') + '\n' +
-    '[부채]\n- 채무·공과금: '+formatKor(S.debt)+(totalDeposit>0?' (※ 임대보증금 '+formatKor(totalDeposit)+' 포함 여부 확인 필요)':'')+'\n\n' +
-    '[10년 내 사전증여]\n- '+priorDesc+'\n\n' +
-    '[공제 자격]\n- 동거주택 공제: '+(S.hasCohouse?'있음 (주택 합계 평가액: '+formatKor(S.cohouseAmt)+', 공제 한도 6억원 내에서 적용)':'없음')+'\n- 배우자 주택 보유: '+(S.spouseHasHouse?'있음':'없음')+'\n\n' +
-    '[중요 공제 판단 기준]\n' +
-    (S.isSpouseOnly
-      ? '⚠️ 배우자 단독 상속: 자녀가 없으므로 상증세법 제21조 단서에 따라 일괄공제(5억) 절대 적용 불가. 반드시 [기초공제 2억 + 인적공제 합산액]만 적용할 것.\n'
-      : '배우자+자녀 상속: 일괄공제(5억) vs [기초공제 2억+인적공제] 중 유리한 금액 선택 가능.\n') +
-    (S.hasSpouse ? '' : '배우자 없음: 배우자 상속공제 적용 불가.\n') +
-    '[요청 분석 타입]\n'+typeLabel+'\n\n위 데이터를 바탕으로 타입 '+type+' 분석을 정확히 수행해 주세요.';
+// 상속세 세율 계산 (과세표준: 만원 단위)
+function calcInheritTax(taxBase) {
+  if (taxBase <= 0) return 0;
+  var w = toWon(taxBase);
+  if (w <= 100000000)       return w * 0.10;
+  if (w <= 500000000)       return 10000000 + (w - 100000000) * 0.20;
+  if (w <= 1000000000)      return 90000000 + (w - 500000000) * 0.30;
+  if (w <= 3000000000)      return 240000000 + (w - 1000000000) * 0.40;
+  return 1040000000 + (w - 3000000000) * 0.50;
 }
 
-// ════════════════════════════════════════════
-//  AI API 호출
-// ════════════════════════════════════════════
-var SYSTEM_PROMPT = `[Role & Objective]
-당신은 대한민국 최고의 상속세 및 프롭테크 전문 AI 세무 컨설턴트입니다.
-사용자가 입력한 자산 현황과 상속인 정보를 바탕으로 대한민국의 최신 세법(상속세, 취득세 등)을 엄격하게 적용하여, 사용자가 선택한 '분석 타입(A, B, C)'에 맞는 맞춤형 절세 컨설팅 리포트를 작성하는 것이 당신의 목표입니다.
+// 핵심 상속세 계산 함수
+function computeInheritance(mode) {
+  // mode: 'legal'(법정), 'optimal'(협의분할 최적화)
+  var hT = S.houses.reduce(function(s,h){return s+h.value;},0);
+  var nT = S.nhouses.reduce(function(s,h){return s+h.value;},0);
+  var totalDeposit = S.nhouses.reduce(function(s,h){return s+(h.deposit||0);},0);
+  var totalRent    = S.nhouses.reduce(function(s,h){return s+(h.rent||0);},0);
+  var grossAsset   = hT + nT + S.finance + S.insurance + S.general;
+  var debt         = S.debt + totalDeposit; // 채무 + 임대보증금
+  var funeral      = 500; // 장례비 기본 500만원
+  var netAsset     = grossAsset - debt - funeral;
+  if (netAsset < 0) netAsset = 0;
 
-[Tone & Manner]
-- 전문적이고 신뢰감을 주는 정중한 문체를 사용합니다.
-- 복잡한 세무 용어를 사용하되, 일반인도 이해하기 쉽도록 풀어서 설명합니다.
-- 계산 과정과 절세 논리를 명확하고 단호하게 제시합니다.
+  // 사전증여 합산
+  var priorTotal = S.priorSpouse + S.priorChildren.reduce(function(s,c){return s+c.amount;},0);
+  var taxableBase = netAsset + priorTotal; // 과세가액
 
-[법령 해석 우선순위]
-1순위: 상속세 및 증여세법, 지방세법 등 법령 원문 및 국세청 공식 해석
-2순위: 국세청 홈택스 안내, 국세청 FAQ, 국세법령정보시스템 예규·판례
-3순위: 세무사·전문가 해설 자료 (참고용)
-※ 해석이 충돌할 경우 반드시 국세청 공식 기준을 적용하세요.
+  // ── 공제 계산 ──
 
-[상속세 계산 구조 - 반드시 아래 순서와 금액을 정확히 적용할 것]
+  // 1. 배우자공제
+  var spouseDeduct = 0;
+  if (S.hasSpouse) {
+    var n = S.childCount;
+    var spouseRatio = n > 0 ? 1.5 / (n + 1.5) : 1;
+    var spouseLegal = taxableBase * spouseRatio - S.priorSpouse;
+    if (spouseLegal < 0) spouseLegal = 0;
+    spouseDeduct = Math.min(spouseLegal, 300000); // 30억 한도 (만원)
+    spouseDeduct = Math.max(spouseDeduct, 50000);  // 최소 5억
+  }
 
-▶ STEP 1. 상속세 과세가액 산정
-  과세가액 = 총 상속재산가액 - (공과금 + 장례비용 + 채무) + 사전증여재산
-  - 장례비용: 증빙 없이 500만원, 증빙 있으면 최대 1,000만원 + 봉안시설비 500만원
-  - 채무: 금융대출, 임대보증금(상속인이 승계), 미납세금 등
-  - 사전증여재산 합산 기준:
-    · 상속인(배우자·자녀): 사망 전 10년 이내 증여분 합산
-    · 비상속인(손주·사위·며느리 등): 사망 전 5년 이내 증여분 합산
-  ※ 합산 시 증여 당시 가격으로 합산 (사망 시점 시가 아님)
-    → 가치 상승 자산 사전 증여 시: 상승분에 대한 상속세 완전 절감 효과
+  // 2. 일괄공제 vs 기초+인적공제
+  var basicDeduct = 20000;
+  var personalDeduct = 0;
+  if (S.childCount > 0) personalDeduct += S.childCount * 5000;
+  if (S.minorCount > 0) personalDeduct += S.minorCount * 4000;
+  var lumpDeduct = 50000;
+  var baseAndPersonal = basicDeduct + personalDeduct;
+  var chosenDeduct, chosenLabel;
+  if (S.hasSpouse && S.childCount === 0) {
+    chosenDeduct = basicDeduct;
+    chosenLabel = '기초공제 2억원 (배우자 단독 상속 - 일괄공제 불가)';
+  } else {
+    chosenDeduct = Math.max(lumpDeduct, baseAndPersonal);
+    chosenLabel = chosenDeduct === lumpDeduct
+      ? '일괄공제 5억원'
+      : '기초공제 2억 + 인적공제 ' + formatKor(personalDeduct) + ' = ' + formatKor(baseAndPersonal);
+  }
 
-▶ STEP 1-1. 사전증여가 상속공제에 미치는 이중 영향 (반드시 분석에 명시)
-  사전증여는 단순 "재산 더하기"가 아니라 상속공제 한도까지 잠식하는 이중 타격:
+  // 3. 금융재산공제 (상증세법 제22조 - 사적 채무 배제, 금융채무만 차감)
+  // 입력된 S.debt 중 임대보증금(사적채무)은 이미 별도 처리 → 금융채무는 0으로 가정 (별도 입력 없음)
+  var netFinWon = Math.max(0, toWon(S.finance)); // 원 단위
+  var financeDeductWon = 0;
+  if (netFinWon <= 20000000) {
+    financeDeductWon = netFinWon;
+  } else if (netFinWon <= 100000000) {
+    financeDeductWon = 20000000; // 2천만 고정
+  } else {
+    financeDeductWon = Math.min(netFinWon * 0.2, 200000000); // 20%, 최대 2억
+  }
+  var financeDeduct = Math.round(financeDeductWon / 10000); // 만원으로 환원
 
-  [영향 ①] 과세가액 증가 → 높은 세율 구간 적용
-    사전증여재산이 합산될수록 과세표준이 커져 더 높은 세율이 적용됨
+  // 4. 동거주택공제 (부채 강제 안분 + 실제 지분율 적용)
+  var cohouseDeduct = 0;
+  if (S.hasCohouse && hT > 0) {
+    // 총자산 대비 주택 비율만큼 부채 안분
+    var totalAssetWon = toWon(grossAsset);
+    var houseDebtPortion = totalAssetWon > 0
+      ? toWon(debt) * (toWon(hT) / totalAssetWon)
+      : 0;
+    var houseNetValueWon = Math.max(0, toWon(hT) - houseDebtPortion);
 
-  [영향 ②] 상속공제 종합한도 축소 (제24조) ← 가장 중요
-    한도 = 실제 상속재산 - 사전증여재산의 증여세 과세표준
-    ※ 과세표준 = 증여재산가액 - 증여재산공제액
-    · 배우자 공제: 6억 / 직계비속: 5,000만 / 미성년자: 2,000만
-    → 공제 문턱을 넘긴 금액만 한도 차감에 반영됨
-    예시:
-    - 자녀에게 5,000만원 증여 → 증여재산공제 5,000만원 적용 → 과세표준 0원 → 한도 차감 없음
-    - 배우자에게 8억원 증여 → 배우자공제 6억 차감 → 과세표준 2억원 → 한도 2억원 감소
-    - 전 재산을 사전증여하고 사망 → 실제 상속재산 거의 없음 → 일괄공제·배우자공제 한도 내에서 사용 불가 → 공제 낭비
+    // 자녀 지분율: 협의분할=100%, 법정분할=자녀 전체 지분
+    var childShareRatio;
+    if (mode === 'optimal') {
+      childShareRatio = 1.0; // 협의분할: 자녀 100%
+    } else if (S.hasSpouse && S.childCount > 0) {
+      childShareRatio = S.childCount / (S.childCount + 1.5); // 법정지분 자녀 전체
+    } else {
+      childShareRatio = 1.0;
+    }
+    var childHouseShareWon = houseNetValueWon * childShareRatio;
+    cohouseDeduct = Math.round(Math.min(childHouseShareWon, 600000000) / 10000); // 6억 한도, 만원
+  }
 
-  [영향 ③] 사전증여재산 자체에는 상속공제 적용 불가
-    일괄공제·동거주택공제 등은 오직 사망 당시 실제 상속받은 재산에만 적용
-    → 이미 증여된 재산에는 동거주택공제 등 소급 적용 불가
+  // 5. 공제 합산
+  var sumDeductions = chosenDeduct + spouseDeduct + cohouseDeduct + financeDeduct;
 
-  [이중과세 방지]
-    사전증여 당시 납부한 증여세는 상속세 산출세액에서 전액 공제 (기납부증여세액공제)
-    → 이중과세는 없지만 합산 자체로 세율 구간 상승 효과는 발생
+  // 6. 제24조 종합한도 (사전증여 과세표준 차감)
+  var priorSpouseTaxBase = Math.max(0, S.priorSpouse - 60000); // 배우자 6억 공제
+  var priorChildTaxBase  = S.priorChildren.reduce(function(s,c){
+    return s + Math.max(0, c.amount - 5000);
+  }, 0);
+  var priorTaxBase = priorSpouseTaxBase + priorChildTaxBase;
+  // 실제 상속재산(과세가액에서 사전증여 제외) 기준으로 한도 산출
+  var deductLimit = Math.max(0, netAsset - (taxableBase > 50000 ? priorTaxBase : 0));
+  var totalDeduct = Math.min(sumDeductions, deductLimit);
 
-  [절세 핵심 전략 안내 시 반드시 포함]
-    ① 10년 시계 전략: 지금 증여하고 10년 이상 생존 시 합산에서 완전 제외 → 과세가액·공제한도 모두 보호
-    ② 가치상승 자산 우선 증여: 증여 당시 가격으로 합산되므로 재개발 지분·우량주식 등 먼저 증여 시 상승분 세금 완전 방어
+  // 7. 과세표준 및 산출세액
+  var taxStandard = Math.max(0, taxableBase - totalDeduct);
+  var grossTax    = calcInheritTax(taxStandard);
 
-▶ STEP 2. 상속공제액 계산
-  ※ 공제 항목별 중복 적용 구조 (반드시 준수):
-     총 공제 = [일괄공제 OR 기초+인적공제 중 큰 것] + [배우자공제] + [금융재산공제] + [동거주택공제]
-     → 각 항목은 독립적으로 합산. 동거주택공제가 있어도 일괄공제는 반드시 별도 적용할 것.
+  // 8. 세액공제
+  var reportDeduct = Math.round(grossTax * 0.03); // 신고세액공제 3%
+  // 기납부증여세액공제: 사전증여 과세표준에 세율 적용
+  var priorTaxPaid = Math.round(calcInheritTax(priorTaxBase));
 
-  [배우자 상속공제] ← 배우자 생존 시에만 독립적으로 적용
-  공식: max(5억원, min(실제상속받은금액, 법정상속분한도액, 30억원))
-  - 최소 보장: 배우자가 아무것도 상속 안 받아도 무조건 5억원 공제
-  - 5억원 초과 공제 시 한도 계산:
-    ① 실제 상속받은 금액 (사전증여재산 제외, 승계채무 차감)
-    ② 법정상속분 한도액 = (상속재산가액 × 배우자 법정지분율) - 배우자 사전증여 증여세 과세표준
-       * 법정지분율: 자녀 n명 + 배우자 시 → 배우자 = 1.5 / (n + 1.5)
-       * 예) 자녀 1명: 60% / 자녀 2명: 42.86% / 자녀 3명: 33.33%
-    ③ 30억원 (절대 상한)
-    → 위 3가지 중 가장 작은 금액이 공제 한도
-  - 5억원 초과 공제 받으려면: 신고기한 후 9개월 내 배우자 명의 등기 완료 필수
-  - 배우자 단독 상속 시: 일괄공제 불가 → 기초공제(2억) + 인적공제만 가능
+  var finalTax = Math.max(0, Math.round(grossTax - reportDeduct - priorTaxPaid));
 
-  [일괄공제 5억원] vs [기초공제 2억 + 인적공제] 중 큰 금액 선택
-  - 실무상 자녀 2명 이하이면 거의 항상 일괄공제 5억원이 유리
-  - 인적공제: 자녀 1인당 5,000만원 / 미성년자 (19-나이)×1,000만원 / 65세이상 5,000만원
-  ※ 배우자 단독 상속 시(자녀 없음): 상증세법 제21조 제1항 단서에 따라 일괄공제(5억) 적용 절대 불가
-    → 이 경우 공제 = [기초공제 2억] + [배우자 상속공제 최소 5억] = 총 최소 7억원
-    → 자녀 1명이라도 있으면 일괄공제 5억 + 배우자공제 5억 = 최소 10억원과 비교하면 3억 불리
+  // 9. 취득세
+  var acquisitionTax = 0;
+  var acqDetails = [];
+  if (hT > 0) {
+    if (S.hasCohouse && mode === 'optimal') {
+      var hTax = Math.round(toWon(hT) * 0.008);
+      acquisitionTax += hTax;
+      acqDetails.push({ name: '주택 (무주택 특례 0.8%)', value: hT, rate: '0.8%', tax: hTax / 10000 });
+    } else {
+      var hTax2 = Math.round(toWon(hT) * 0.028);
+      acquisitionTax += hTax2;
+      acqDetails.push({ name: '주택', value: hT, rate: '2.8%', tax: hTax2 / 10000 });
+    }
+  }
+  if (nT > 0) {
+    var nTax = Math.round(toWon(nT) * 0.028);
+    acquisitionTax += nTax;
+    acqDetails.push({ name: '주택 외 부동산', value: nT, rate: '2.8%', tax: nTax / 10000 });
+  }
 
-  [금융재산 상속공제] (상증세법 제22조) ← 일괄공제·배우자공제와 별도로 추가 합산 적용
-  ▶ 적용 대상: 거주자 사망으로 상속 개시 시, 상속재산 중 금융재산이 포함된 경우
-  ▶ 계산 기준: 순금융재산 = 금융재산 - 금융채무(금융회사 대출에 한정)
-  ※ 임대보증금·개인간 사채 등 사적 채무는 금융채무에서 제외 (과세가액 차감은 가능)
-  ▶ 공제 금액 (4구간):
-    ① 순금융재산 2,000만원 이하     → 순금융재산 전액 공제
-    ② 순금융재산 2,000만원~1억원   → 무조건 2,000만원 고정 공제
-    ③ 순금융재산 1억원~10억원       → 순금융재산 × 20% 공제
-    ④ 순금융재산 10억원 초과         → 최대 2억원 한도
-  ▶ 공제 제외 금융재산:
-    - 최대주주·최대출자자 보유 주식
-    - 상속세 신고기한까지 신고 안 한 타인 명의 금융재산
-    - 영업용 현금, 개인간 대여금(사채)
-  ▶ 계산 예시:
-    - 순금융재산 1,000만원 → 1,000만원 전액 공제
-    - 순금융재산 5,000만원 → 2,000만원 고정 공제
-    - 순금융재산 1억원     → 1억 × 20% = 2,000만원 공제
-    - 순금융재산 3억원     → 3억 × 20% = 6,000만원 공제
-    - 순금융재산 10억원    → 10억 × 20% = 2억원 공제 (한도 도달)
-    - 순금융재산 20억원    → 2억원 공제 (한도)
-  ▶ 실무 핵심 (추정상속재산 주의):
-    사망 전 1년 이내 2억원 또는 2년 이내 5억원 이상 인출 후 용처 불분명 시
-    → 국세청이 상속재산으로 강제 합산 (추정상속재산, 상증세법 제15조)
+  return {
+    grossAsset, netAsset, debt, funeral, priorTotal, taxableBase,
+    spouseDeduct, chosenDeduct, chosenLabel, financeDeduct, cohouseDeduct,
+    totalDeduct, deductLimit, taxStandard, grossTax, reportDeduct, priorTaxPaid, finalTax,
+    acquisitionTax: acquisitionTax / 10000,
+    acqDetails, totalDeposit, totalRent,
+    hT, nT
+  };
+}
 
-  [동거주택 상속공제] ← 직계비속(자녀)만 해당, 배우자는 절대 불가
-  ※ 중요: 동거주택 상속공제는 일괄공제(5억), 배우자공제와 완전히 별개 항목으로 중복 적용 가능
-     → 즉, [일괄공제 5억] + [배우자공제] + [동거주택공제 최대 6억] + [금융재산공제] 모두 동시 적용
-     → 동거주택 공제가 있다고 해서 일괄공제를 포기하거나 줄이면 절대 안 됨
-  요건: ① 자녀가 무주택자 ② 피상속인과 10년 이상 계속 동거 ③ 1세대 1주택
-  ※ 1세대 1주택 대전제 주의: 상속개시일 당시 피상속인과 같은 세대인 자녀나 배우자 중
-     1명이라도 유주택자이면 공제 전액 0원 (세대 분리가 안 된 경우)
-  ※ 공동상속 시 공제 계산:
-     - 공제 대상 = 자녀가 실제 상속받은 지분의 주택가액에서 부채를 안분 차감한 금액
-     - 배우자 지분은 공제 대상에서 무조건 제외
-     - 부채 강제 안분 산식: 자녀 주택가액 - (총부채 × 자녀주택가액/총상속재산가액)
-     - 협의분할로 자녀가 아파트 100% 가져갈 때만 6억 한도 전액 확보 가능
-     - 법정지분 분할 시 배우자 지분 + 부채 안분으로 실제 공제액이 대폭 축소됨
-  공제액 한도: 주택가액의 100%, 최대 6억원
+// ── HTML 리포트 생성
+function generateReportHTML(type) {
+  var mode = type === 'A' ? 'legal' : 'optimal';
+  var r  = computeInheritance(mode);
+  var rL = type !== 'A' ? computeInheritance('legal') : null;
+  var n  = S.childCount;
 
-▶ STEP 3. 과세표준 산정
-  과세표준 = 과세가액 - 상속공제 합계액
-  단, 상속공제 합계액은 제24조 종합한도 이내로 제한됨 (아래 참조)
+  var html = '';
 
-▶ STEP 3-1. 공제 적용 종합한도 검증 (상증세법 제24조) ← 반드시 최종 확인
-  ※ 모든 상속공제 합계액은 아래 한도를 초과할 수 없음
-  공제한도액 = 상속세 과세가액
-             - ① 선순위 상속인이 아닌 자에게 유증·사인증여한 재산가액
-             - ② 선순위 상속인의 상속포기로 차순위 상속인이 받은 재산가액
-             - ③ 과세가액에 가산한 사전증여재산의 과세표준 (증여재산공제액 차감 후)
-                 ※ ③은 상속세 과세가액이 5억원 초과 시에만 적용
-                 ※ 창업자금·가업승계 주식은 ③에서 제외
-  → 실무 핵심: 사전증여가 많을수록 공제한도가 줄어들어 실질 절세효과 감소
-  → 일반적인 상속(유증·포기·대규모 사전증여 없음): 한도 = 과세가액 전액 → 초과 없음
+  // ── 헤더
+  var headers = {
+    A: '⚖️ A. 법정상속 분석 리포트',
+    B: '🤝 B. 사후 협의분할 분석 리포트',
+    C: '📋 C. 생전 유언(유언공증) 분석 리포트'
+  };
+  var subHeaders = {
+    A: '민법상 법정지분(배우자 1.5 : 자녀 각 1)에 따른 상속세·취득세 계산 및 집행 가이드',
+    B: '사망 후 상속인 전원 합의로 동거주택·배우자공제를 극대화하는 최적 절세 시나리오',
+    C: '생전에 유언공증으로 분할을 확정하여 사후 분쟁을 차단하고 세금 혜택을 법적으로 고정하는 완벽한 마스터플랜'
+  };
+  html += '<div class="ai-h1">' + headers[type] + '</div>';
+  html += '<div style="font-size:13px;color:var(--toss-subtext);margin-bottom:20px;line-height:1.7;padding:12px 14px;background:rgba(107,53,207,0.04);border-radius:10px;">' + subHeaders[type] + '</div>';
 
-▶ STEP 4. 산출세액 (2025년 현행 세율 - 속산표)
-  - 1억원 이하: 10%
-  - 1억 초과~5억 이하: 20% / 속산: 1,000만원 + (1억 초과액 × 20%)
-  - 5억 초과~10억 이하: 30% / 속산: 9,000만원 + (5억 초과액 × 30%)
-  - 10억 초과~30억 이하: 40% / 속산: 2억 4,000만원 + (10억 초과액 × 40%)
-  - 30억 초과: 50% / 속산: 10억 4,000만원 + (30억 초과액 × 50%)
-  예시) 과세표준 11억 8,000만원 → 2억 4,000만원 + (1억 8,000만원 × 40%) = 3억 1,200만원
+  // ════════════════════════════
+  // 1. 상속현황 정리
+  // ════════════════════════════
+  html += '<div class="ai-h2">1. 상속현황 정리</div>';
 
-▶ STEP 5. 세액공제
-  - 신고세액공제: 산출세액의 3% (법정기한 내 신고 시)
-  - 기납부증여세액공제: 사전증여 시 납부한 증여세 전액 차감
+  // 자산 현황 표
+  html += '<table><thead><tr><th>구분</th><th>평가액</th><th>비고</th></tr></thead><tbody>';
+  if (r.hT > 0)      html += '<tr><td>주택 합계</td><td>' + formatKor(r.hT) + '</td><td>' + (S.hasCohouse ? '✅ 동거주택공제 대상' : '') + '</td></tr>';
+  if (r.nT > 0)      html += '<tr><td>주택 외 부동산</td><td>' + formatKor(r.nT) + '</td><td>' + (r.totalDeposit > 0 ? '임대보증금 ' + formatKor(r.totalDeposit) + ' 포함' : '') + '</td></tr>';
+  if (S.finance > 0) html += '<tr><td>금융재산</td><td>' + formatKor(S.finance) + '</td><td>금융재산공제 대상</td></tr>';
+  if (S.insurance>0) html += '<tr><td>보험금·퇴직금</td><td>' + formatKor(S.insurance) + '</td><td></td></tr>';
+  if (S.general > 0) html += '<tr><td>일반재산</td><td>' + formatKor(S.general) + '</td><td></td></tr>';
+  html += '<tr><td><strong>총 상속재산</strong></td><td><strong>' + formatKor(r.grossAsset) + '</strong></td><td></td></tr>';
+  html += '<tr><td>차감: 채무·보증금·장례비</td><td>△' + formatKor(r.debt + r.funeral) + '</td><td></td></tr>';
+  if (r.priorTotal > 0) html += '<tr><td>사전증여 합산 (+)</td><td>' + formatKor(r.priorTotal) + '</td><td>10년 이내 상속인 증여분</td></tr>';
+  html += '<tr style="background:rgba(107,53,207,0.06)"><td><strong>상속세 과세가액</strong></td><td><strong>' + formatKor(r.taxableBase) + '</strong></td><td></td></tr>';
+  html += '</tbody></table>';
 
-▶ STEP 5. 세대생략 할증과세 해당 여부 확인 (상증세법 제27조)
-  - 상속인이 피상속인의 자녀가 아닌 직계비속(손자녀 등): 산출세액의 30% 할증
-  - 미성년자가 20억원 초과 상속받는 경우: 40% 할증
-  - 대습상속(직계비속 사망으로 그 직계비속이 대신 상속): 할증 제외
-  → 본 계산기 입력값에 해당 사항이 없으면 생략 가능
+  // 타입별 분할 현황 설명
+  if (type === 'A') {
+    if (S.hasSpouse && n > 0) {
+      var spR = 1.5 / (n + 1.5);
+      var chR = 1 / (n + 1.5);
+      html += '<div class="ai-h3">법정지분 안분 내역</div>';
+      html += '<table><thead><tr><th>상속인</th><th>지분율</th><th>상속액</th></tr></thead><tbody>';
+      html += '<tr><td>배우자</td><td>' + (spR*100).toFixed(2) + '%</td><td>' + formatKor(Math.round(r.taxableBase * spR)) + '</td></tr>';
+      for (var i = 0; i < n; i++) {
+        html += '<tr><td>자녀 ' + (i+1) + '</td><td>' + (chR*100).toFixed(2) + '%</td><td>' + formatKor(Math.round(r.taxableBase * chR)) + '</td></tr>';
+      }
+      html += '</tbody></table>';
+    }
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">';
+    html += '법정 지분율에 따라 배우자와 자녀 ' + n + '명이 모든 자산을 균등하게 분할 상속받는 시나리오입니다. 별도의 협의 없이 기계적으로 법정 지분대로 등기를 마칠 경우, 세법상 받을 수 있는 공제 혜택이 대폭 축소됩니다.';
+    html += '</div>';
+  }
 
-▶ 취득세 (상속)
-  - 주택(무주택 상속인, 1가구 1주택 특례): 0.8% (지교세 포함 0.96%)
-  - 주택(유주택 상속인): 2.8% (농특세+지교세 포함 약 3.64%)
-  - 상가·빌딩·토지 등: 2.8% (농특세+지교세 포함 약 3.16%)
-  - 농지: 2.3%
-  - 신고기한: 상속개시일로부터 6개월 이내
+  if (type === 'B') {
+    html += '<div class="ai-h3">협의분할 최적 배분 플랜</div>';
+    html += '<table><thead><tr><th>자산</th><th>배분 대상</th><th>이유</th></tr></thead><tbody>';
+    if (r.hT > 0 && S.hasCohouse) html += '<tr><td>주택 (' + formatKor(r.hT) + ')</td><td><strong>무주택 동거 자녀 100%</strong></td><td>동거주택공제 6억 전액 확보</td></tr>';
+    if (r.nT > 0 && S.hasSpouse)  html += '<tr><td>주택 외 부동산 (' + formatKor(r.nT) + ')</td><td><strong>배우자 집중 배분</strong></td><td>배우자공제 극대화</td></tr>';
+    if (S.finance > 0 && S.hasSpouse) html += '<tr><td>금융재산 (' + formatKor(S.finance) + ')</td><td>배우자</td><td>배우자공제 한도 확보</td></tr>';
+    html += '</tbody></table>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">';
+    html += '사망 후 상속인 전원의 합의를 통해 아파트를 무주택 동거 자녀에게 100% 단독 상속하고, 상가와 금융자산은 배우자가 집중 상속받는 방식입니다. 6개월의 골든타임 안에 분할협의서를 작성해야 합니다.';
+    html += '</div>';
+  }
 
-▶ 절세 전략 핵심 원칙 (분석 시 반드시 적용)
-  1. 배우자 공제 극대화: 배우자에게 덩치 큰 자산(상가 등)을 몰아줘 공제액 최대화
-  2. 동거주택 공제 보존: 아파트는 반드시 요건 갖춘 자녀에게 100% 단독 또는 공동 상속
-     (배우자 지분이 1%라도 들어가면 해당 지분만큼 공제 손실)
-  3. 법정분할 vs 협의분할: 법정분할은 동거주택 공제가 부채 안분으로 대폭 축소됨
-  4. 2차 상속 방어: 배우자에게 넘어간 자산은 향후 자녀에게 사전증여하거나 월세 분배로 축소
-  5. 연대납부 활용: 상속세는 상속인 간 연대납부 의무 → 어머니가 자녀 세금 대납해도 증여세 없음
-  6. 취득세 특례 활용: 무주택 자녀가 주택 상속 시 0.8% 특례 반드시 신청
+  if (type === 'C') {
+    html += '<div class="ai-h3">유언 지정 분할 플랜</div>';
+    html += '<table><thead><tr><th>자산</th><th>유언 지정 대상</th><th>효과</th></tr></thead><tbody>';
+    if (r.hT > 0 && S.hasCohouse) html += '<tr><td>주택 (' + formatKor(r.hT) + ')</td><td><strong>무주택 동거 자녀 100% 지정</strong></td><td>동거주택공제 확보 + 분쟁 차단</td></tr>';
+    if (r.nT > 0 && S.hasSpouse)  html += '<tr><td>주택 외 부동산 (' + formatKor(r.nT) + ')</td><td><strong>배우자 지정</strong></td><td>배우자공제 극대화</td></tr>';
+    html += '</tbody></table>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px;background:#f8f9fa;border-radius:10px;margin-top:8px;">';
+    html += '피상속인이 생전에 공증인 앞에서 증인 2명과 함께 유언공정증서를 작성하여, 사후 분할 방식을 법적으로 확정하는 가장 완벽한 셋업입니다. 협의분할(B사례)과 달리 상속인 중 단 1명의 거부로도 깨질 수 없습니다.';
+    html += '</div>';
+  }
 
-[Output Generation Rules]
-1. 요청받은 분석 타입(A, B, C)에 해당하는 목차 포맷을 정확히 100% 준수하여 출력하세요.
-2. 각 항목의 제목 앞에는 숫자를 붙여 목차를 구성하세요.
-3. 모든 금액은 천 단위 쉼표(,)와 '원' 단위로 명확히 표기하세요.
-4. 위 세법 규정을 반드시 정확히 적용하여 STEP별 계산 과정을 명시하세요.
-5. 배우자 공제와 일괄공제는 반드시 별도 항목으로 구분 표시하세요.
-6. 모호한 값은 합리적 가정을 세우고 명시하세요.
-7. 협의분할 분석 시 반드시 법정분할 대비 절세액을 명시하세요.
-8. 동거주택 공제는 세대원 유주택 여부를 반드시 먼저 확인하고 적용 여부를 판단하세요.
-9. 상속공제 합계액 산정 후 반드시 제24조 종합한도와 비교하여 초과 여부를 확인하세요.
-10. 사전증여재산이 있는 경우 ①과세가액 증가 ②공제한도 축소 ③자체 공제 불가 세 가지 영향을 모두 명시하세요.
-11. 사전증여 분석 시 증여재산공제액 차감 후 과세표준 기준으로 공제한도 감소액을 계산하고, 실질 절세효과를 반드시 평가하세요.
-12. 절대 중간에 끊지 말고 요청된 타입의 모든 목차 항목을 빠짐없이 완성하세요. 마지막 항목(실전 집행 가이드 등)까지 반드시 출력하세요.
+  // ════════════════════════════
+  // 2. 상속세 계산
+  // ════════════════════════════
+  html += '<div class="ai-h2">2. 상속세 계산</div>';
 
-[Output Templates by Type]
+  // 공제 내역 표
+  html += '<div class="ai-h3">상속공제 내역</div>';
+  html += '<table><thead><tr><th>공제 항목</th><th>공제액</th><th>비고</th></tr></thead><tbody>';
+  html += '<tr><td>' + r.chosenLabel + '</td><td>' + formatKor(r.chosenDeduct) + '</td><td></td></tr>';
+  if (S.hasSpouse) html += '<tr><td>배우자 상속공제</td><td>' + formatKor(r.spouseDeduct) + '</td><td>최소 5억 보장</td></tr>';
+  if (r.financeDeduct > 0) html += '<tr><td>금융재산 상속공제</td><td>' + formatKor(r.financeDeduct) + '</td><td>순금융재산 기준</td></tr>';
 
-타입 A 출력 구조:
-1. 상속세 계산기 입력값을 분석하여 상속현황(법적상속) 정리
-   - 법정 지분율(배우자 1.5 : 자녀 각 1) 안분 내역
-   - 사전증여재산 합산액 및 순과세가액 산정
-2. 상속세 계산
-   - 적용된 상속공제액 상세 (일괄, 배우자, 동거주택, 금융 등)
-   - 과세표준 및 최종 산출세액
-3. 취득세 계산
-   - 상속인별 취득 자산과 지분 금액에 따른 취득세 (특례세율 유무 반영)
-4. 실전 집행 가이드 요약
-   - 자산가치 평가, 취득세 신고/등기, 상속세 연부연납 등 기한별 절차
+  if (r.cohouseDeduct > 0) {
+    var cohouseNote = type === 'A'
+      ? '부채 안분 적용 — 법정분할로 인한 누수 발생'
+      : '자녀 100% 배분 — 6억 한도 전액 확보';
+    html += '<tr><td>동거주택 상속공제</td><td>' + formatKor(r.cohouseDeduct) + '</td><td>' + cohouseNote + '</td></tr>';
+  }
 
-타입 B 출력 구조:
-1. 상속세 계산기 입력값을 분석하여 협의분할 최적 절세 시나리오 정리
-   - 자산별 최적 소유권 집중 분할 플랜 제시
-2. 상속세 계산
-   - 극대화된 상속공제액 상세 (동거주택 및 배우자 공제 극대화)
-   - 과세표준 및 최종 산출세액, 법정상속 대비 절세 효과
-3. 취득세 계산
-   - 주택 특례세율 감면 혜택 등을 적용한 총 취득세
-4. 미래 2차 상속세 계산
-   - 배우자 사망 시 발생할 2차 상속세 예측 및 사전 방어 전략
-5. 시나리오에 대한 이유 설명
-   - 공제액 확보, 배우자 공제 극대화, 연대납부 활용 논리
-6. 실전 집행 가이드 요약
-   - 분할협의서 작성(5개월 내), 취득세/상속세 신고(6개월 내), 등기 절차
+  if (type === 'A' && S.hasCohouse && r.cohouseDeduct < 60000) {
+    var maxCohouse = 60000;
+    var loss = maxCohouse - r.cohouseDeduct;
+    html += '<tr style="background:#fff3cd"><td colspan="2">⚠️ 동거주택공제 누수액</td><td style="color:#856404;font-weight:700;">△' + formatKor(loss) + ' 손실</td></tr>';
+  }
 
-타입 C 출력 구조:
-1. 상속세 계산기 입력값을 분석하여 협의분할 최적 절세 시나리오 정리
-   - 사후 분쟁 차단을 위한 생전 유언장 지정 분할 플랜
-2. 상속세 계산
-   - 유언 지정에 따른 확보 가능 공제액 및 산출세액
-3. 취득세 계산
-   - 유언 상속에 따른 취득세 (주택 특례 감면 등)
-4. 미래 2차 상속세 계산
-   - 배우자 명의 자산의 미래 상속세 및 월세/지분 분산 차단법
-5. 사전증여에 대한 컨설팅
-   - 10년 이내 사망 시 단기 리스크 및 10년 이후 완벽 절세 효과 분석
-6. 시나리오에 대한 이유 설명
-   - 유언을 통한 지분 쪼개기 방지, 동거주택공제 보존, 합법적 연대납부
-7. 실전 집행 가이드 요약
-   - 유언공정증서 즉시 작성, 상가 지분 일부 사전 증여, 취득세 특례 신청 및 등기 절차`;
+  html += '<tr style="background:rgba(107,53,207,0.06)"><td><strong>공제 합계 (종합한도 적용 후)</strong></td><td><strong>' + formatKor(r.totalDeduct) + '</strong></td><td></td></tr>';
+  html += '</tbody></table>';
 
-async function callAI(type) {
+  if (r.deductLimit < r.chosenDeduct + r.spouseDeduct + r.financeDeduct + r.cohouseDeduct) {
+    html += '<div style="background:#fff3cd;border-radius:10px;padding:10px 14px;font-size:13px;color:#856404;margin:8px 0;">⚠️ 제24조 종합한도 ' + formatKor(r.deductLimit) + '으로 제한 — 사전증여로 인한 공제 한도 축소</div>';
+  }
+
+  // 세액 계산 근거 (아코디언)
+  html += '<div class="ai-h3">🧮 세액 계산 근거</div>';
+
+  // 세율 구간 및 누진공제액 계산
+  var txWon = r.taxStandard * 10000;
+  var rateStr, progressStr, taxFormula;
+  if (txWon <= 100000000) {
+    rateStr = '10%'; progressStr = '0원'; taxFormula = formatKor(r.taxStandard) + ' × 10% = ' + formatKor(Math.round(r.grossTax/10000));
+  } else if (txWon <= 500000000) {
+    rateStr = '20%'; progressStr = '1,000만원'; taxFormula = formatKor(r.taxStandard) + ' × 20% − 1,000만원 = ' + formatKor(Math.round(r.grossTax/10000));
+  } else if (txWon <= 1000000000) {
+    rateStr = '30%'; progressStr = '6,000만원'; taxFormula = formatKor(r.taxStandard) + ' × 30% − 6,000만원 = ' + formatKor(Math.round(r.grossTax/10000));
+  } else if (txWon <= 3000000000) {
+    rateStr = '40%'; progressStr = '1억 6,000만원'; taxFormula = formatKor(r.taxStandard) + ' × 40% − 1억 6,000만원 = ' + formatKor(Math.round(r.grossTax/10000));
+  } else {
+    rateStr = '50%'; progressStr = '4억 6,000만원'; taxFormula = formatKor(r.taxStandard) + ' × 50% − 4억 6,000만원 = ' + formatKor(Math.round(r.grossTax/10000));
+  }
+
+  html += '<details style="background:#f8f9fa;border-radius:10px;border:1px solid #e0e0e0;margin-bottom:8px;overflow:hidden;">';
+  html += '<summary style="padding:12px 16px;font-size:13px;font-weight:700;cursor:pointer;color:var(--purple);list-style:none;display:flex;justify-content:space-between;align-items:center;">📐 상속세 계산 근거 상세 보기 <span>▼</span></summary>';
+  html += '<div style="padding:14px 16px;font-size:13px;line-height:2.2;border-top:1px solid #e0e0e0;">';
+  html += '<div style="font-family:monospace;background:#fff;border-radius:8px;padding:12px;border:1px solid #e8e8e8;">';
+  html += '① 과세가액     = ' + formatKor(r.grossAsset) + ' − ' + formatKor(r.debt + r.funeral) + (r.priorTotal>0?' + '+formatKor(r.priorTotal):'') + '<br>';
+  html += '             = <strong>' + formatKor(r.taxableBase) + '</strong><br><br>';
+  html += '② 상속공제     = ' + formatKor(r.chosenDeduct) + (S.hasSpouse?' + '+formatKor(r.spouseDeduct):'') + (r.financeDeduct>0?' + '+formatKor(r.financeDeduct):'') + (r.cohouseDeduct>0?' + '+formatKor(r.cohouseDeduct):'') + '<br>';
+  if (r.totalDeduct < r.chosenDeduct + r.spouseDeduct + r.financeDeduct + r.cohouseDeduct) {
+    html += '   ※ 종합한도 적용: min(합계, ' + formatKor(r.deductLimit) + ') = <strong>' + formatKor(r.totalDeduct) + '</strong><br><br>';
+  } else {
+    html += '             = <strong>' + formatKor(r.totalDeduct) + '</strong><br><br>';
+  }
+  html += '③ 과세표준     = ' + formatKor(r.taxableBase) + ' − ' + formatKor(r.totalDeduct) + ' = <strong>' + formatKor(r.taxStandard) + '</strong><br><br>';
+  html += '④ 산출세액     = ' + taxFormula + '<br>';
+  html += '   적용세율: <strong>' + rateStr + '</strong> / 누진공제액: <strong>' + progressStr + '</strong><br><br>';
+  html += '⑤ 신고세액공제 = ' + formatKor(Math.round(r.grossTax/10000)) + ' × 3% = △<strong>' + formatKor(Math.round(r.reportDeduct/10000)) + '</strong><br>';
+  if (r.priorTaxPaid > 0) html += '⑥ 기납부증여세 = △<strong>' + formatKor(Math.round(r.priorTaxPaid/10000)) + '</strong><br>';
+  html += '</div>';
+  html += '<div style="font-size:16px;font-weight:900;color:var(--purple);margin-top:12px;text-align:center;">최종 납부세액 = <strong>' + formatKor(r.finalTax) + '</strong></div>';
+  html += '</div></details>';
+
+  // 취득세 아코디언
+  if (r.acqDetails.length > 0) {
+    html += '<details style="background:#f8f9fa;border-radius:10px;border:1px solid #e0e0e0;margin-bottom:8px;overflow:hidden;">';
+    html += '<summary style="padding:12px 16px;font-size:13px;font-weight:700;cursor:pointer;color:var(--purple);list-style:none;display:flex;justify-content:space-between;align-items:center;">📐 취득세 계산 근거 상세 보기 <span>▼</span></summary>';
+    html += '<div style="padding:14px 16px;font-size:13px;line-height:2.2;border-top:1px solid #e0e0e0;">';
+    html += '<div style="font-family:monospace;background:#fff;border-radius:8px;padding:12px;border:1px solid #e8e8e8;">';
+    r.acqDetails.forEach(function(a) {
+      html += a.name + '<br>';
+      html += '= ' + formatKor(a.value) + ' × ' + a.rate + ' = <strong>' + formatKor(Math.round(a.tax)) + '</strong><br>';
+      if (a.rate === '0.8%') html += '   ※ 무주택 자녀 특례(지방세법 제15조) — 일반세율 2.8% 대비 ' + formatKor(Math.round(a.value * 0.02)) + ' 절감<br>';
+      html += '<br>';
+    });
+    html += '취득세 합계 = <strong>' + formatKor(Math.round(r.acquisitionTax)) + '</strong>';
+    html += '</div>';
+    html += '</div></details>';
+  }
+
+  // B/C: 절세 효과 박스
+  if ((type === 'B' || type === 'C') && rL) {
+    var saving = rL.finalTax - r.finalTax;
+    if (saving > 0) {
+      html += '<div style="background:linear-gradient(135deg,rgba(15,122,69,0.12),rgba(15,122,69,0.04));border-radius:14px;padding:18px;margin:14px 0;border:1.5px solid rgba(15,122,69,0.25);">';
+      html += '<div style="font-size:12px;color:#0F7A45;font-weight:700;margin-bottom:6px;">법정상속 대비 절세 효과</div>';
+      html += '<div style="font-size:26px;font-weight:900;color:#0F7A45;">💰 ' + formatKor(saving) + ' 절세</div>';
+      html += '<div style="font-size:12px;color:#6b7280;margin-top:6px;">법정상속 납부세액 ' + formatKor(rL.finalTax) + ' → ' + (type==='B'?'협의분할':'유언상속') + ' ' + formatKor(r.finalTax) + '</div>';
+      html += '</div>';
+    }
+  }
+
+  // A: 리스크 경고
+  if (type === 'A') {
+    html += '<div style="background:#FFF3F3;border:1.5px solid #FFCDD2;border-radius:12px;padding:16px;margin:12px 0;">';
+    html += '<div style="font-size:14px;font-weight:800;color:#C62828;margin-bottom:8px;">⚠️ 법정상속의 세무적 리스크</div>';
+    html += '<ul style="font-size:13px;color:#6b0000;line-height:2;">';
+    if (S.hasCohouse) html += '<li>동거주택공제가 부채 안분으로 <strong>' + formatKor(r.cohouseDeduct) + '</strong>만 적용 (최대 6억 미달, ' + formatKor(60000 - r.cohouseDeduct) + ' 누수)</li>';
+    html += '<li>배우자·자녀 지분 혼재로 아파트 향후 처분 시 전원 합의 필요</li>';
+    html += '<li>협의분할 전환 기한: 상속개시일로부터 <strong>6개월 이내</strong></li>';
+    html += '<li>가족 간 분할협의 없이 등기를 치는 것은 <strong>절세 전략상 최악의 선택</strong></li>';
+    html += '</ul></div>';
+  }
+
+  // ════════════════════════════
+  // 3. 취득세 계산
+  // ════════════════════════════
+  html += '<div class="ai-h2">3. 취득세 계산</div>';
+  html += '<table><thead><tr><th>자산</th><th>평가액</th><th>세율</th><th>취득세</th><th>비고</th></tr></thead><tbody>';
+  r.acqDetails.forEach(function(a) {
+    var note = a.rate === '0.8%' ? '✅ 무주택 특례' : (type==='A' && a.name.includes('주택') ? '⚠️ 특례 미적용' : '');
+    html += '<tr><td>' + a.name + '</td><td>' + formatKor(a.value) + '</td><td>' + a.rate + '</td><td>' + formatKor(Math.round(a.tax)) + '</td><td>' + note + '</td></tr>';
+  });
+  html += '<tr style="background:rgba(107,53,207,0.06)"><td colspan="3"><strong>취득세 합계</strong></td><td><strong>' + formatKor(Math.round(r.acquisitionTax)) + '</strong></td><td></td></tr>';
+  html += '</tbody></table>';
+
+  if (type === 'A' && S.hasCohouse) {
+    var normalTax = Math.round(r.hT * 0.028);
+    var specialTax = Math.round(r.hT * 0.008);
+    html += '<div style="font-size:13px;color:#856404;background:#fff3cd;border-radius:10px;padding:10px 14px;margin-top:8px;">⚠️ 무주택 특례(0.8%) 미적용 시 취득세 ' + formatKor(normalTax) + ' — 협의분할 시 ' + formatKor(normalTax - specialTax) + ' 추가 절감 가능</div>';
+  }
+
+  // ════════════════════════════
+  // 4. 실전 집행 가이드
+  // ════════════════════════════
+  html += '<div class="ai-h2">4. 실전 집행 가이드</div>';
+  html += '<table><thead><tr><th>기한</th><th>할 일</th><th>필수 서류</th></tr></thead><tbody>';
+  html += '<tr><td>즉시</td><td>상속재산 목록 작성, 금융기관 사망 신고</td><td>사망진단서, 가족관계증명서</td></tr>';
+  if (type === 'B') html += '<tr><td style="color:#C62828;font-weight:700;">5개월 이내</td><td><strong>분할협의서 작성 — 전원 인감 날인 필수</strong></td><td>분할협의서, 인감증명서 각 1통</td></tr>';
+  html += '<tr><td style="color:#C62828;font-weight:700;">6개월 이내</td><td><strong>취득세 신고·납부 / 상속세 신고·납부</strong></td><td>상속세 신고서, 재산평가서</td></tr>';
+  html += '<tr><td>9개월 이내</td><td>배우자 명의 등기 완료 (5억 초과 공제 조건)</td><td>등기신청서, 취득세 납부확인서</td></tr>';
+  if (type === 'C') html += '<tr><td>사전 (생전)</td><td><strong>유언공정증서 작성 (공증인 + 증인 2명)</strong></td><td>유언공정증서 — 자필·녹음 유언은 요건 미비 시 무효</td></tr>';
+  html += '<tr><td>납세 어려울 시</td><td>연부연납 신청 (최대 10년 분할 납부)</td><td>연부연납 신청서</td></tr>';
+  html += '</tbody></table>';
+
+  // ════════════════════════════
+  // 5. 향후 추가 절세 시나리오
+  // ════════════════════════════
+  html += '<div class="ai-h2">5. 향후 추가 절세 시나리오</div>';
+
+  if (type === 'A') {
+    html += '<div style="font-size:13px;line-height:2;padding:14px;background:#f8f9fa;border-radius:10px;">';
+    html += '현재 발생한 상속세를 납부하기 위해 상가를 급매하거나 대출을 일으키기보다, 금융자산을 활용해 납세를 우선 해결하고 추후 2차 상속(배우자 사망 시)을 대비한 사전증여 재원을 분리 확보하는 것이 필요합니다.<br>';
+    html += '<strong>지금이라도 상속세 신고기한(6개월) 내 협의분할로 전환하면 수억 원의 추가 절세가 가능합니다.</strong>';
+    html += '</div>';
+  }
+
+  if (type === 'B') {
+    html += '<div style="font-size:13px;line-height:2;padding:14px;background:#f8f9fa;border-radius:10px;">';
+    html += '상속받은 수익형 부동산(상가)의 월세 수익을 바탕으로 <strong>10년 주기로 손주들에게 사전증여</strong>를 실행하여 향후 2차 상속(배우자 사망 시) 대비 상속세 재원을 미리 마련하는 전략을 권장합니다.<br>';
+    html += '배우자에게 집중된 자산이 2차 상속 시 다시 과세될 수 있으므로, 생전에 점진적으로 자산을 분산하는 것이 장기적으로 최선입니다.';
+    html += '</div>';
+  }
+
+  if (type === 'C') {
+    html += '<div class="ai-h2">5. 추가 사전증여를 통한 절세 컨설팅</div>';
+
+    var monthlyRent = r.totalRent > 0 ? r.totalRent : 500;
+    var annualRent  = monthlyRent * 12;
+    var rent10yr    = annualRent * 10;
+
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.8;padding:12px 14px;background:rgba(107,53,207,0.04);border-radius:10px;margin-bottom:14px;">';
+    html += '어머니 명의로 상가를 넘긴 후, 2차 상속세 폭탄을 무력화하기 위한 생전 추가 사전증여 설계입니다. 상가에서 나오는 <strong>월세 ' + formatKor(monthlyRent) + '</strong>이 핵심 열쇠입니다.';
+    html += '</div>';
+
+    // 절세 핵심 순서 플로우
+    html += '<div class="ai-h3">절세 핵심 순서</div>';
+    html += '<div style="background:#f8f9fa;border-radius:12px;padding:16px;font-size:13px;line-height:2.4;border:1px solid #e0e0e0;font-family:monospace;">';
+    html += '어머니 상가 단독 상속<br>';
+    html += '&nbsp;&nbsp;&nbsp;└── ① 상가 지분 일부를 자녀에게 즉시 증여 (10% 세율 구간 활용)<br>';
+    html += '&nbsp;&nbsp;&nbsp;└── ② 매월 월세 ' + formatKor(monthlyRent) + '의 귀속처를 자녀 명의로 합법적 변경<br>';
+    html += '&nbsp;&nbsp;&nbsp;└── ③ 어머니 최종 자산 5억원 이하 조절 ──▶ <strong style="color:#0F7A45;">2차 상속세 "0원" 달성</strong>';
+    html += '</div>';
+
+    html += '<div class="ai-h3">세부 실행 전략</div>';
+
+    // 전략 1
+    html += '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;border:1.5px solid #e8e8e8;">';
+    html += '<div style="font-size:14px;font-weight:800;color:var(--toss-text);margin-bottom:8px;">① 소액 지분 즉시 증여</div>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">';
+    html += '상가 지분 중 약 <strong>1억~1억 5,000만원</strong>에 해당하는 지분을 자녀들에게 즉시 추가 사전증여합니다.<br>';
+    html += '성년 자녀 증여세 <strong>10% 세율 구간</strong>을 활용해 아주 적은 세금만 내고 상가 지분을 쪼갭니다.<br>';
+    html += '<span style="font-size:12px;background:#e8f5e9;border-radius:6px;padding:3px 8px;color:#2e7d32;">증여세 예상: 약 500만~1,000만원 수준 (성년 자녀 공제 5천만원 활용)</span>';
+    html += '</div></div>';
+
+    // 전략 2
+    html += '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;border:1.5px solid #e8e8e8;">';
+    html += '<div style="font-size:14px;font-weight:800;color:var(--toss-text);margin-bottom:8px;">② 월세 수입의 분산 <span style="font-size:12px;color:#C62828;font-weight:700;">(가장 중요)</span></div>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">';
+    html += '지분을 쪼개는 순간, 매달 나오는 월세 중 지분만큼이 자녀들의 <strong>합법적인 소득</strong>으로 잡힙니다.<br>';
+    html += '<strong style="color:#C62828;">⚠️ 증여 안 할 경우:</strong> 어머니 통장에 연 ' + formatKor(annualRent) + ', 10년에 <strong>' + formatKor(rent10yr) + '</strong>의 현금이 쌓여 2차 상속세를 무시무시하게 키웁니다.<br>';
+    html += '이 현금 흐름을 자녀에게로 돌려야 합니다.';
+    html += '</div></div>';
+
+    // 전략 3
+    html += '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;border:1.5px solid #e8e8e8;">';
+    html += '<div style="font-size:14px;font-weight:800;color:var(--toss-text);margin-bottom:8px;">③ 10년 주기 리셋 전략</div>';
+    html += '<div style="font-size:13px;color:var(--toss-subtext);line-height:1.9;">';
+    html += '어머니가 향후 <strong>10년 이상 건강하게 생존</strong>하신다면, 10년 주기로 상가 지분을 추가 증여하여<br>';
+    html += '어머니 사망 시점의 최종 재산을 <strong>5억원 이하</strong>로 떨어뜨립니다.<br>';
+    html += '<div style="margin-top:8px;padding:10px;background:linear-gradient(135deg,rgba(15,122,69,0.1),rgba(15,122,69,0.05));border-radius:8px;color:#0F7A45;font-weight:800;font-size:14px;text-align:center;">🎯 결과: 2차 상속세 최종 0원 달성</div>';
+    html += '</div></div>';
+
+    // 타임라인
+    html += '<div class="ai-h3">실행 타임라인</div>';
+    html += '<table><thead><tr><th>시점</th><th>실행 내용</th><th>효과</th></tr></thead><tbody>';
+    html += '<tr><td><strong>즉시</strong></td><td>상가 지분 1억~1.5억 자녀 증여</td><td>월세 흐름 분산 시작</td></tr>';
+    html += '<tr><td>매년</td><td>월세 ' + formatKor(monthlyRent) + '/월 → 자녀 귀속 (지분 비례)</td><td>어머니 자산 증가 차단</td></tr>';
+    html += '<tr><td>10년 후</td><td>상가 지분 추가 증여 (10년 주기)</td><td>2차 상속 과세표준 축소</td></tr>';
+    html += '<tr><td><strong>장기 목표</strong></td><td>어머니 잔여 자산 5억원 이하 유지</td><td style="color:#0F7A45;font-weight:800;">2차 상속세 0원</td></tr>';
+    html += '</tbody></table>';
+  }
+
+  // ════════════════════════════
+  // 6. 결론 및 이유
+  // ════════════════════════════
+  html += '<div class="ai-h2">6. 시나리오 결론 및 이유</div>';
+
+  var reasons = {
+    A: '법정상속은 가족 간 협의 없이 사망 직후 자동으로 적용되는 가장 간단한 방식이지만, 세법상 혜택을 스스로 걷어차는 결과를 낳습니다. 동거주택공제와 취득세 감면은 "실제 누가 어떤 자산을 물려받느냐"를 기준으로 혜택을 줍니다. 지분이 분산될수록 혜택은 희석되고 부채는 강제로 안분되어 세금이 최대로 나오게 됩니다. <strong>지금이라도 6개월 내 협의분할로 전환하면 상황을 역전시킬 수 있습니다.</strong>',
+    B: '기계적인 법정상속은 동거주택공제와 취득세 혜택을 무참히 찢어버립니다. 아무리 슬프고 경황이 없더라도 6개월의 골든타임 안에 "아파트는 특정 자녀에게 몰아준다"는 분할협의서를 작성해야만 국세청이 주는 수억 원의 혜택을 챙길 수 있습니다. <strong>단, 협의분할의 치명적 약점은 상속인 중 단 1명이라도 도장을 안 찍으면 즉시 깨진다는 것입니다. 가족 간 갈등이 우려된다면 C사례(유언)를 검토하시기 바랍니다.</strong>',
+    C: '협의분할(B)의 치명적 약점은 상속인 중 단 1명의 거부로도 합의가 깨진다는 점입니다. 돈 앞에서는 형제도 돌변할 수 있습니다. 생전에 아버지가 법적 구속력을 가진 유언공증으로 쐐기를 박아두면, 사후 분쟁을 100% 차단하면서 동시에 동거주택공제·취득세 감면 등 모든 세금 혜택을 강제로 챙겨올 수 있습니다. <strong>이것이 가장 확실하고 완벽한 절세의 정석입니다.</strong>'
+  };
+
+  html += '<div style="font-size:14px;line-height:2;padding:16px;background:linear-gradient(135deg,rgba(107,53,207,0.06),rgba(107,53,207,0.02));border-radius:12px;border-left:4px solid var(--purple);">' + reasons[type] + '</div>';
+
+  // ── 임대 현황
+  if (r.totalRent > 0) {
+    html += '<div style="background:rgba(107,53,207,0.05);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13px;">';
+    html += '<strong>📌 임대 수익 현황</strong><br>월 임대수익: ' + formatKor(r.totalRent) + ' / 연간 약 ' + formatKor(r.totalRent * 12);
+    html += '</div>';
+  }
+
+  // ── 절세 가이드 배너
+  html += '<div style="background:linear-gradient(135deg,#1e3a5f,#6B35CF);border-radius:14px;padding:18px;margin-top:16px;color:#fff;font-size:13px;line-height:1.9;">';
+  html += '<strong style="color:#fbbf24;font-size:14px;display:block;margin-bottom:6px;">💡 AI 실전 절세 가이드</strong>';
+  if (r.cohouseDeduct > 0 && type !== 'A') html += '동거주택공제 <strong>' + formatKor(r.cohouseDeduct) + '</strong> — 아파트 지분을 무주택 동거 자녀에게 100% 유지 필수<br>';
+  if (type === 'A' && S.hasCohouse) html += '⚠️ 법정분할 유지 시 동거주택공제 ' + formatKor(60000 - r.cohouseDeduct) + ' 누수 — 협의분할 전환 강력 권고<br>';
+  html += '가치 상승 예상 자산(재개발 지분·우량주식)을 우선 증여 — 증여 당시 가격으로 합산, 상승분 세금 완전 방어<br>';
+  if (r.priorTotal > 0) html += '⚠️ 사전증여 ' + formatKor(r.priorTotal) + ' — 공제 종합한도 축소 발생. 10년 이후 추가 증여 시 과세가액에서 완전 제외';
+  html += '</div>';
+
+  html += '<div class="notice-box" style="margin-top:14px;">※ 본 분석은 입력값 기반 자동 계산 결과로, 실제 세액은 개별 상황에 따라 달라질 수 있습니다. 정확한 신고를 위해 담당 세무사 확인을 권장합니다.</div>';
+
+  return html;
+}
+// ── API 호출 대신 즉시 렌더링
+function callAI(type) {
   var t = type.toLowerCase();
   var loadEl = document.getElementById('loading-' + t);
   var conEl  = document.getElementById('content-' + t);
   var errEl  = document.getElementById('error-' + t);
 
-  loadEl.style.display = 'block';
-  conEl.innerHTML = '';
-  conEl.style.display = 'block'; // 스트리밍 중에도 바로 보이도록
+  loadEl.style.display = 'none';
   errEl.style.display  = 'none';
-
-  var msgEl = document.getElementById('loading-msg-' + t);
-  var barEl = document.getElementById('loading-bar-' + t);
-
-  // 로딩 메시지 시퀀스 (첫 청크 도착 전까지)
-  var msgs = ['자산 데이터 확인 중...', '세법 공제 한도액 계산 중...', '최적 절세 안분율 매칭 중...', '상속세 산출세액 검증 중...', '리포트 작성 시작...'];
-  var pcts = [10, 25, 40, 60, 80];
-  var mIdx = 0;
-  var loadingTimer = setInterval(function() {
-    mIdx = Math.min(mIdx + 1, msgs.length - 1);
-    if (msgEl) msgEl.textContent = msgs[mIdx];
-    if (barEl) barEl.style.width = pcts[mIdx] + '%';
-  }, 3000);
-
-  var fullText = '';
-  var firstChunk = true;
+  conEl.style.display  = 'block';
 
   try {
-    var res = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userPrompt: buildPrompt(type),
-        systemPrompt: SYSTEM_PROMPT
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error('서버 오류 (' + res.status + '). Netlify Function을 확인해 주세요.');
-    }
-
-    var contentType = res.headers.get('content-type') || '';
-
-    // ── 서버가 SSE(text/event-stream)로 응답하는 경우: 청크 스트리밍
-    if (contentType.includes('text/event-stream')) {
-      var reader = res.body.getReader();
-      var decoder = new TextDecoder();
-      var sseBuffer = '';
-
-      while (true) {
-        var chunk = await reader.read();
-        if (chunk.done) break;
-
-        // 첫 청크 도착 시 로딩 UI 전환
-        if (firstChunk) {
-          firstChunk = false;
-          clearInterval(loadingTimer);
-          loadEl.style.display = 'none';
-          if (msgEl) msgEl.textContent = '✍️ AI가 리포트를 작성 중입니다...';
-          if (barEl) barEl.style.width = '100%';
-        }
-
-        sseBuffer += decoder.decode(chunk.value, { stream: true });
-        var lines = sseBuffer.split('\n');
-        sseBuffer = lines.pop();
-
-        for (var i = 0; i < lines.length; i++) {
-          var line = lines[i];
-          if (!line.startsWith('data: ')) continue;
-          var raw = line.slice(6).trim();
-          if (raw === '[DONE]') continue;
-          try {
-            var parsed = JSON.parse(raw);
-            // SSE delta 이벤트에서 텍스트 추출
-            var delta = parsed.delta || parsed;
-            var txt = (delta.type === 'text_delta' ? delta.text : null)
-                   || (parsed.type === 'content_block_delta' ? (parsed.delta && parsed.delta.text) : null)
-                   || '';
-            if (txt) {
-              fullText += txt;
-              conEl.innerHTML = formatText(fullText) + '<span class="typing-cursor">▋</span>';
-              conEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }
-          } catch(e) {}
-        }
-      }
-
-      // 커서 제거 및 최종 렌더
-      cache[type] = fullText;
-      conEl.innerHTML = formatText(fullText);
-
-    // ── 서버가 JSON으로 응답하는 경우 (현재 analyze.js 방식): 한번에 표시
-    } else {
-      var data = await res.json();
-      if (!data.result) throw new Error(data.error || '응답 오류');
-
-      clearInterval(loadingTimer);
-      loadEl.style.display = 'none';
-
-      // 타이핑 효과로 텍스트 점진적 표시 (UX 개선)
-      fullText = data.result;
-      cache[type] = fullText;
-      await typewriterRender(conEl, fullText);
-    }
-
+    var html = generateReportHTML(type);
+    cache[type] = html;
+    conEl.innerHTML = html;
   } catch(e) {
-    clearInterval(loadingTimer);
-    loadEl.style.display = 'none';
     conEl.style.display = 'none';
-
-    var msg = e.message || '';
-    var errHtml = '';
-
-    if (msg.includes('429') || msg.includes('사용량') || msg.includes('rate') || msg.includes('quota')) {
-      errHtml =
-        '<div style="font-size:20px;margin-bottom:10px;">📊</div>' +
-        '<strong style="font-size:15px;color:#b45309;">AI 분석 사용량이 일시적으로 초과됐어요</strong><br><br>' +
-        '<span style="font-size:13px;color:#6b7280;line-height:1.7;">잠시 후 다시 시도하시거나, 지금 바로 전문가에게 직접 상담을 신청하시면 더 정확한 분석을 받으실 수 있어요.</span><br><br>' +
-        '<button onclick="callAI(\'' + type + '\')" style="padding:10px 18px;background:#d97706;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-right:8px;">🔄 잠시 후 다시 시도</button>' +
-        '<button onclick="scrollToConsult()" style="padding:10px 18px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📞 전문가 상담 신청</button>';
-    } else if (msg.includes('504') || msg.includes('timeout') || msg.includes('초과')) {
-      errHtml =
-        '<div style="font-size:20px;margin-bottom:10px;">⏱️</div>' +
-        '<strong style="font-size:15px;color:#b45309;">AI 응답 시간이 초과됐어요</strong><br><br>' +
-        '<span style="font-size:13px;color:#6b7280;line-height:1.7;">네트워크가 느리거나 서버가 일시적으로 바쁜 상태예요. 잠시 후 다시 시도해 주세요.</span><br><br>' +
-        '<button onclick="callAI(\'' + type + '\')" style="padding:10px 18px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">🔄 다시 시도하기</button>';
-    } else if (msg.includes('401') || msg.includes('403') || msg.includes('API key')) {
-      errHtml =
-        '<div style="font-size:20px;margin-bottom:10px;">🔑</div>' +
-        '<strong style="font-size:15px;color:#dc2626;">서비스 설정 오류</strong><br><br>' +
-        '<span style="font-size:13px;color:#6b7280;line-height:1.7;">서비스 설정에 문제가 발생했어요. 잠시 후 다시 시도하시거나 전문가 상담을 이용해 주세요.</span><br><br>' +
-        '<button onclick="scrollToConsult()" style="padding:10px 18px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📞 전문가 상담 신청</button>';
-    } else if (msg.includes('503') || msg.includes('overloaded') || msg.includes('서버')) {
-      errHtml =
-        '<div style="font-size:20px;margin-bottom:10px;">🔧</div>' +
-        '<strong style="font-size:15px;color:#b45309;">AI 서버가 일시적으로 혼잡해요</strong><br><br>' +
-        '<span style="font-size:13px;color:#6b7280;line-height:1.7;">잠시 후 다시 시도해 주세요. 계속 문제가 발생하면 전문가 직접 상담을 이용해 주세요.</span><br><br>' +
-        '<button onclick="callAI(\'' + type + '\')" style="padding:10px 18px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-right:8px;">🔄 다시 시도하기</button>' +
-        '<button onclick="scrollToConsult()" style="padding:10px 18px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📞 전문가 상담</button>';
-    } else {
-      errHtml =
-        '<div style="font-size:20px;margin-bottom:10px;">⚠️</div>' +
-        '<strong style="font-size:15px;color:#dc2626;">AI 분석 중 오류가 발생했어요</strong><br><br>' +
-        '<span style="font-size:13px;color:#6b7280;line-height:1.7;">일시적인 오류일 수 있어요. 다시 시도하거나 전문가 상담을 이용해 주세요.</span><br><br>' +
-        '<button onclick="callAI(\'' + type + '\')" style="padding:10px 18px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-right:8px;">🔄 다시 시도하기</button>' +
-        '<button onclick="scrollToConsult()" style="padding:10px 18px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📞 전문가 상담</button>';
-    }
-
-    errEl.innerHTML = errHtml;
+    errEl.innerHTML = '<div style="font-size:20px;margin-bottom:10px;">⚠️</div><strong style="font-size:15px;color:#dc2626;">계산 중 오류가 발생했어요</strong><br><br><span style="font-size:13px;color:#6b7280;">' + e.message + '</span><br><br><button onclick="callAI(\'' + type + '\')" style="padding:10px 18px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">🔄 다시 시도하기</button>';
     errEl.style.display = 'block';
-  } finally {
-    clearInterval(loadingTimer);
   }
 }
 
-// 타이핑 효과: JSON 응답 시 글자를 순차적으로 렌더링
+// 타이핑 효과 (필요 시 사용)
 async function typewriterRender(el, text) {
-  // 먼저 전체 텍스트를 청크 단위로 나눠서 빠르게 출력
-  var chunkSize = 30; // 한번에 30자씩
-  var delay = 8;      // 8ms 간격
-  for (var i = 0; i < text.length; i += chunkSize) {
-    var partial = text.slice(0, i + chunkSize);
-    el.innerHTML = formatText(partial) + (i + chunkSize < text.length ? '<span class="typing-cursor">▋</span>' : '');
-    await new Promise(function(r){ setTimeout(r, delay); });
-  }
-  el.innerHTML = formatText(text);
+  el.innerHTML = text;
 }
+
 
 function parseMarkdownTable(text) {
   return text.replace(/(\|.+\|\n)((?:\|[-: ]+\|\n))?((?:\|.+\|\n?)*)/g, function(match, header, sep, body) {
